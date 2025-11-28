@@ -23,14 +23,23 @@ const Login: React.FC = () => {
     setIsLoading(true);
     try {
       const user = await login(email.trim(), password);
-      // read role directly to decide redirect (fast and reliable)
-      const snap = await getDoc(doc(firestore, "users", user.uid));
-      const profile = snap.exists() ? snap.data() : null;
-      toast.success("Login successful!");
-      if (profile?.role === "client") navigate("/client");
-      else navigate("/dashboard");
+
+      // Attempt quick profile read but do not block UI forever
+      try {
+        const snap = await getDoc(doc(firestore, "users", user.uid));
+        const profile = snap.exists() ? snap.data() : null;
+        toast.success("Login successful!");
+        if (profile?.role === "client") navigate("/client");
+        else navigate("/dashboard");
+      } catch (err) {
+        console.warn("Profile quick-read failed:", err);
+        toast.success("Signed in — loading your data...");
+        navigate("/dashboard");
+      }
     } catch (err: any) {
-      toast.error(err?.message ?? "Login failed. Please check credentials.");
+      console.error("Login error:", err);
+      // Show clearer error description
+      toast.error(err?.code ? `${err.code}: ${err.message}` : err?.message ?? "Login failed. Please check credentials.");
     } finally {
       setIsLoading(false);
     }
@@ -69,14 +78,10 @@ const Login: React.FC = () => {
 
             <div className="flex items-center justify-between">
               <div className="text-sm text-muted-foreground">
-                <Link to="/forgot-password" className="underline hover:text-primary">
-                  Forgot password?
-                </Link>
+                <Link to="/forgot-password" className="underline hover:text-primary">Forgot password?</Link>
               </div>
               <div className="text-sm">
-                <Link to="/signup" className="underline hover:text-primary">
-                  Create account
-                </Link>
+                <Link to="/signup" className="underline hover:text-primary">Create account</Link>
               </div>
             </div>
 

@@ -1,7 +1,7 @@
 // src/lib/firebase.ts
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { getFirestore, enableIndexedDbPersistence } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
@@ -19,4 +19,11 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const firestore = getFirestore(app);
 export const storage = getStorage(app);
+
+// Enable IndexedDB persistence (safe to call; will warn if not supported / multiple tabs)
+enableIndexedDbPersistence(firestore).catch((err) => {
+  // Not fatal — log and continue
+  console.warn("Could not enable persistence:", err?.code ?? err?.message ?? err);
+});
+
 export default app;

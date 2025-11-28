@@ -17,6 +17,27 @@ import Settings from "./pages/Settings";
 import ClientDashboard from "./pages/ClientDashboard";
 import NotFound from "./pages/NotFound";
 import { RoleProtectedRoute } from "./components/RoleProtectedRoute";
+import ClientProfile from "./pages/ClientProfile";
+import ClientSettings from "./pages/ClientSettings";
+// add near your imports in src/App.tsx
+import React from "react";
+import ClientShare from "./pages/ClientShare";
+
+
+const HomeRedirect: React.FC = () => {
+  const { currentUser, profile, loading } = useAuth();
+
+  // while auth is resolving show nothing (or a spinner)
+  if (loading) return <div className="flex h-screen items-center justify-center">Checking session...</div>;
+
+  if (!currentUser) return <Navigate to="/login" replace />;
+
+  // if profile exists and role is client -> client page, else admin dashboard
+  if (profile?.role === "client") return <Navigate to="/client" replace />;
+  return <Navigate to="/dashboard" replace />;
+};
+
+
 
 const queryClient = new QueryClient();
 
@@ -103,8 +124,36 @@ const App = () => (
                 </RoleProtectedRoute>
               }
             />
+            <Route
+              path="/client/profile"
+              element={
+                <RoleProtectedRoute requiredRole="client">
+                  <ClientProfile />
+                </RoleProtectedRoute>
+              }
+            />
 
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route
+              path="/client/settings"
+              element={
+                <RoleProtectedRoute requiredRole="client">
+                  <ClientSettings />
+                </RoleProtectedRoute>
+              }
+            />
+            <Route
+              path="/client/share"
+              element={
+                <RoleProtectedRoute requiredRole="client">
+                  <ClientShare />
+                </RoleProtectedRoute>
+              }
+            />
+
+
+
+            <Route path="/" element={<HomeRedirect />} />
+
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
