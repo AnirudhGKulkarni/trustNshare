@@ -5,6 +5,9 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { getIdTokenResult } from "firebase/auth";
+import { auth } from "@/lib/firebase";
+import { useNavigate } from "react-router-dom";
 import Login from "./pages/Login";
 import Signup from "./pages/signup";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -26,15 +29,39 @@ import ClientShare from "./pages/ClientShare";
 
 const HomeRedirect: React.FC = () => {
   const { currentUser, profile, loading } = useAuth();
+  const navigate = useNavigate();
 
-  // while auth is resolving show nothing (or a spinner)
-  if (loading) return <div className="flex h-screen items-center justify-center">Checking session...</div>;
+  React.useEffect(() => {
+    if (loading) return;
+    if (!currentUser) {
+      navigate("/login", { replace: true });
+      return;
+    }
 
-  if (!currentUser) return <Navigate to="/login" replace />;
+    if (profile && profile.role === "client") {
+      navigate("/client", { replace: true });
+      return;
+    }
 
-  // if profile exists and role is client -> client page, else admin dashboard
-  if (profile?.role === "client") return <Navigate to="/client" replace />;
-  return <Navigate to="/dashboard" replace />;
+    if (profile && profile.role === "admin") {
+      navigate("/dashboard", { replace: true });
+      return;
+    }
+
+    // profile missing or role unknown — check token claims for admin flag
+    (async () => {
+      try {
+        const id = await getIdTokenResult(auth.currentUser!);
+        if ((id.claims as any)?.admin) navigate("/dashboard", { replace: true });
+        else navigate("/client", { replace: true });
+      } catch (err) {
+        console.warn("HomeRedirect: could not read token claims:", err);
+        navigate("/dashboard", { replace: true });
+      }
+    })();
+  }, [currentUser, profile, loading, navigate]);
+
+  return <div className="flex h-screen items-center justify-center">Checking session...</div>;
 };
 
 

@@ -57,8 +57,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setProfile(snap.data());
         return;
       }
+      // If doc does not exist, infer role from token claims when possible.
+      // This avoids incorrectly assigning 'client' to admin users who were
+      // provisioned via server-side (Admin SDK) custom claims but don't yet
+      // have a Firestore profile document.
+      let inferredRole: "admin" | "client" = "client";
+      try {
+        // Try to read token claims from the currently-signed-in user
+        // (non-blocking if unavailable).
+        if (auth.currentUser) {
+          const id = await auth.currentUser.getIdTokenResult();
+          if ((id.claims as any)?.admin) inferredRole = "admin";
+        }
+      } catch (err) {
+        // If token claim read fails, fall back to client role.
+        console.warn("Could not read token claims while inferring role:", err);
+      }
 
-      // If doc does not exist, create a conservative default profile (client by default)
       const defaultProfile = {
         firstName: "",
         lastName: "",
@@ -66,7 +81,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         company: null,
         companyDomain: null,
         domain: "Other",
-        role: "client", // safe default — never auto-assign "admin"
+        role: inferredRole,
         createdAt: new Date().toISOString(),
       };
 

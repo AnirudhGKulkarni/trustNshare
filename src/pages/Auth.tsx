@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Shield, User, Briefcase, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -7,8 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { getDoc, doc } from "firebase/firestore";
-import { firestore } from "@/lib/firebase";
+import { getDoc, doc, setDoc } from "firebase/firestore";
+import { firestore, auth } from "@/lib/firebase";
+import { GoogleAuthProvider, signInWithPopup, getIdTokenResult } from "firebase/auth";
 
 const domainOptions = ["IT", "Logistics", "HR", "Finance", "Retail", "Healthcare", "Other"] as const;
 
@@ -34,6 +35,7 @@ const Auth: React.FC = () => {
 
   const { login, signup } = useAuth();
   const navigate = useNavigate();
+  const googleInProgressRef = useRef(false);
 
   // Carousel items for right-hand illustration
   const carouselItems = [
@@ -123,8 +125,39 @@ const Auth: React.FC = () => {
         const snap = await getDoc(doc(firestore, "users", user.uid));
         const profile = snap.exists() ? snap.data() : null;
         toast.success("Login successful!");
-        if (profile?.role === "client") navigate("/client");
-        else navigate("/dashboard");
+
+        // Always check token claims — they are set server-side and are authoritative for admin.
+        let isAdminClaim = false;
+        try {
+          const id = await getIdTokenResult(user);
+          if (id.claims && (id.claims as any).admin) isAdminClaim = true;
+        } catch (err) {
+          console.warn("Could not read token claims after login:", err);
+        }
+
+        // If token claims indicate admin, ensure Firestore profile reflects that and navigate to admin
+        if (isAdminClaim) {
+          try {
+            // if profile exists but role isn't admin, update it
+            const ref = doc(firestore, "users", user.uid);
+            if (!profile || profile.role !== "admin") {
+              await setDoc(ref, { role: "admin" }, { merge: true });
+            }
+          } catch (err) {
+            console.warn("Could not sync admin role to Firestore:", err);
+          }
+          navigate("/dashboard");
+          return;
+        }
+
+        // Otherwise, if profile explicitly says client -> client, else default to dashboard
+        if (profile && profile.role === "client") {
+          navigate("/client");
+          return;
+        }
+
+        // final fallback
+        navigate("/dashboard");
       } catch (err) {
         console.warn("Profile quick-read failed:", err);
         toast.success("Signed in — loading your data...");
@@ -134,6 +167,101 @@ const Auth: React.FC = () => {
       console.error("Login error:", err);
       toast.error(err?.code ? `${err.code}: ${err.message}` : err?.message ?? "Login failed. Please check credentials.");
     } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogle = async () => {
+    if (googleInProgressRef.current) return;
+    googleInProgressRef.current = true;
+    setIsLoading(true);
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+
+      // Ensure a Firestore user doc exists; if not, create a default one.
+      const ref = doc(firestore, "users", user.uid);
+      const snap = await getDoc(ref);
+      if (!snap.exists()) {
+        // Try to split displayName into first/last
+        const displayName = user.displayName ?? "";
+        const [firstName = "", ...rest] = displayName.split(" ");
+        const lastName = rest.join(" ") || "";
+
+        // Infer role from token claims if possible (so older admins without a profile aren't created as clients)
+        let inferredRole: "admin" | "client" = "client";
+        try {
+          const id = await getIdTokenResult(user);
+          if ((id.claims as any)?.admin) inferredRole = "admin";
+        } catch (err) {
+          console.warn("Could not read token claims while creating user doc:", err);
+        }
+
+        await setDoc(ref, {
+          firstName,
+          lastName,
+          email: user.email ?? "",
+          company: null,
+          companyDomain: null,
+          domain: "Other",
+          role: inferredRole,
+          createdAt: new Date().toISOString(),
+        });
+      }
+
+      // After successful Google sign-in, try a quick read to decide where to navigate.
+      try {
+        const snap2 = await getDoc(doc(firestore, "users", user.uid));
+        const profile = snap2.exists() ? snap2.data() : null;
+        toast.success("Signed in with Google");
+
+        // Check token claims (authoritative for admin)
+        let isAdminClaim2 = false;
+        try {
+          const id = await getIdTokenResult(user);
+          if ((id.claims as any)?.admin) isAdminClaim2 = true;
+        } catch (err) {
+          console.warn("Could not read token claims after Google sign-in:", err);
+        }
+
+        if (isAdminClaim2) {
+          try {
+            if (!profile || profile.role !== "admin") {
+              await setDoc(doc(firestore, "users", user.uid), { role: "admin" }, { merge: true });
+            }
+          } catch (err) {
+            console.warn("Could not sync admin role to Firestore (google):", err);
+          }
+          navigate("/dashboard");
+          return;
+        }
+
+        if (profile && profile.role === "client") {
+          navigate("/client");
+          return;
+        }
+
+        navigate("/dashboard");
+      } catch (err) {
+        console.warn("Post-Google quick profile read failed:", err);
+        navigate("/dashboard");
+      }
+    } catch (err: any) {
+      // Many browsers / flows may fire a cancelled-popup-request when a popup
+      // was programmatically closed because another auth request took precedence.
+      // This is noisy but not actionable if the sign-in actually completed.
+      const code = err?.code ?? err?.message;
+      if (code === "auth/cancelled-popup-request") {
+        console.debug("Google sign-in cancelled-popup-request ignored");
+      } else if (code === "auth/popup-closed-by-user") {
+        toast.error("Google sign-in popup closed before completing.");
+      } else {
+        console.error("Google sign-in error:", err);
+        toast.error(err?.message ?? "Google sign-in failed");
+      }
+    } finally {
+      googleInProgressRef.current = false;
       setIsLoading(false);
     }
   };
@@ -255,7 +383,7 @@ const Auth: React.FC = () => {
                     </div>
 
                     <div className="mt-4 flex justify-center">
-                      <button type="button" className="inline-flex items-center gap-3 rounded-full border px-4 py-2 hover:shadow-sm">
+                      <button type="button" onClick={handleGoogle} disabled={isLoading} aria-busy={isLoading} className="inline-flex items-center gap-3 rounded-full border px-4 py-2 hover:shadow-sm disabled:opacity-60">
                         <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
                           <path d="M17.64 9.2045c0-.638-.0576-1.2525-.1656-1.8473H9v3.497h4.844c-.208 1.12-.84 2.07-1.7976 2.71v2.25h2.9052c1.7-1.566 2.688-3.88 2.688-6.61z" fill="#4285F4"/>
                           <path d="M9 18c2.43 0 4.47-.806 5.96-2.186l-2.9052-2.25C11.46 13.086 10.27 13.5 9 13.5c-2.31 0-4.27-1.56-4.97-3.66H1.072v2.3C2.56 15.78 5.54 18 9 18z" fill="#34A853"/>
@@ -386,7 +514,7 @@ const Auth: React.FC = () => {
                     </div>
 
                     <div className="mt-4 flex justify-center">
-                      <button type="button" className="inline-flex items-center gap-3 rounded-full border px-4 py-2 hover:shadow-sm">
+                      <button type="button" onClick={handleGoogle} disabled={isLoading} aria-busy={isLoading} className="inline-flex items-center gap-3 rounded-full border px-4 py-2 hover:shadow-sm disabled:opacity-60">
                         <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
                           <path d="M17.64 9.2045c0-.638-.0576-1.2525-.1656-1.8473H9v3.497h4.844c-.208 1.12-.84 2.07-1.7976 2.71v2.25h2.9052c1.7-1.566 2.688-3.88 2.688-6.61z" fill="#4285F4"/>
                           <path d="M9 18c2.43 0 4.47-.806 5.96-2.186l-2.9052-2.25C11.46 13.086 10.27 13.5 9 13.5c-2.31 0-4.27-1.56-4.97-3.66H1.072v2.3C2.56 15.78 5.54 18 9 18z" fill="#34A853"/>
