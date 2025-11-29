@@ -191,8 +191,17 @@ const Auth: React.FC = () => {
 
       // Ensure a Firestore user doc exists; if not, create a default one.
       const ref = doc(firestore, "users", user.uid);
-      const snap = await getDoc(ref);
-      if (!snap.exists()) {
+      let snap = null as any;
+      try {
+        snap = await getDoc(ref);
+      } catch (err: any) {
+        const isPermDenied = err && (err.code === "permission-denied" || String(err).toLowerCase().includes("permission"));
+        console.warn("Could not read user doc during Google sign-in (non-blocking):", err);
+        if (!isPermDenied) throw err; // rethrow unexpected errors
+        snap = null;
+      }
+
+      if (!snap || !snap.exists()) {
         // Try to split displayName into first/last
         const displayName = user.displayName ?? "";
         const [firstName = "", ...rest] = displayName.split(" ");
@@ -207,16 +216,26 @@ const Auth: React.FC = () => {
           console.warn("Could not read token claims while creating user doc:", err);
         }
 
-        await setDoc(ref, {
-          firstName,
-          lastName,
-          email: user.email ?? "",
-          company: null,
-          companyDomain: null,
-          domain: "Other",
-          role: inferredRole,
-          createdAt: new Date().toISOString(),
-        });
+        try {
+          await setDoc(ref, {
+            firstName,
+            lastName,
+            email: user.email ?? "",
+            company: null,
+            companyDomain: null,
+            domain: "Other",
+            role: inferredRole,
+            createdAt: new Date().toISOString(),
+          });
+        } catch (err: any) {
+          const isPermDenied = err && (err.code === "permission-denied" || String(err).toLowerCase().includes("permission"));
+          console.warn("Could not create user doc during Google sign-in (non-blocking):", err);
+          if (!isPermDenied) {
+            // If it's an unexpected error, rethrow so outer catch can handle it.
+            throw err;
+          }
+          // Permission errors are expected under strict rules; continue without failing sign-in.
+        }
       }
 
       // After successful Google sign-in, try a quick read to decide where to navigate.
