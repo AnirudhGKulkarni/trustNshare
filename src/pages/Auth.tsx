@@ -126,42 +126,51 @@ const Auth: React.FC = () => {
         const profile = snap.exists() ? snap.data() : null;
         toast.success("Login successful!");
 
-        // Always check token claims — they are set server-side and are authoritative for admin.
-        let isAdminClaim = false;
-        try {
-          const id = await getIdTokenResult(user);
-          if (id.claims && (id.claims as any).admin) isAdminClaim = true;
-        } catch (err) {
-          console.warn("Could not read token claims after login:", err);
-        }
-
-        // If token claims indicate admin, ensure Firestore profile reflects that and navigate to admin
-        if (isAdminClaim) {
-          try {
-            // if profile exists but role isn't admin, update it
-            const ref = doc(firestore, "users", user.uid);
-            if (!profile || profile.role !== "admin") {
-              await setDoc(ref, { role: "admin" }, { merge: true });
-            }
-          } catch (err) {
-            console.warn("Could not sync admin role to Firestore:", err);
-          }
-          navigate("/dashboard");
-          return;
-        }
-
-        // Otherwise, if profile explicitly says client -> client, else default to dashboard
+        // Prefer authoritative Firestore profile when available.
         if (profile && profile.role === "client") {
           navigate("/client");
           return;
         }
 
-        // final fallback
-        navigate("/dashboard");
+        if (profile && profile.role === "admin") {
+          navigate("/dashboard");
+          return;
+        }
+
+        // If profile is missing or role unknown, check token claims (server-side) as fallback.
+        try {
+          const id = await getIdTokenResult(user);
+          if ((id.claims as any)?.admin) {
+            // ensure Firestore reflects admin role if possible
+            try {
+              const ref = doc(firestore, "users", user.uid);
+              await setDoc(ref, { role: "admin" }, { merge: true });
+            } catch (err) {
+              console.warn("Could not sync admin role to Firestore:", err);
+            }
+            navigate("/dashboard");
+            return;
+          }
+        } catch (err) {
+          console.warn("Could not read token claims after login (fallback):", err);
+        }
+
+        // Default to client for safety when role not known.
+        navigate("/client");
       } catch (err) {
         console.warn("Profile quick-read failed:", err);
         toast.success("Signed in — loading your data...");
-        navigate("/dashboard");
+        // If profile read fails (often due to Firestore rules), prefer client routing
+        // unless token claims explicitly mark user as admin.
+        try {
+          const id = await getIdTokenResult(user);
+          if ((id.claims as any)?.admin) navigate("/dashboard");
+          else navigate("/client");
+        } catch (err2) {
+          console.warn("Could not read token claims after profile read failure:", err2);
+          // Default to client to avoid sending new users to admin dashboard.
+          navigate("/client");
+        }
       }
     } catch (err: any) {
       console.error("Login error:", err);
@@ -225,6 +234,18 @@ const Auth: React.FC = () => {
           console.warn("Could not read token claims after Google sign-in:", err);
         }
 
+        // Prefer profile role if available
+        if (profile && profile.role === "client") {
+          navigate("/client");
+          return;
+        }
+
+        if (profile && profile.role === "admin") {
+          navigate("/dashboard");
+          return;
+        }
+
+        // Fallback to token claims for Google-signins
         if (isAdminClaim2) {
           try {
             if (!profile || profile.role !== "admin") {
@@ -237,15 +258,20 @@ const Auth: React.FC = () => {
           return;
         }
 
-        if (profile && profile.role === "client") {
-          navigate("/client");
-          return;
-        }
-
-        navigate("/dashboard");
+        // Default to client
+        navigate("/client");
       } catch (err) {
         console.warn("Post-Google quick profile read failed:", err);
-        navigate("/dashboard");
+        // Prefer client routing when profile read fails during Google sign-in,
+        // but check token claims first to respect any admin claims.
+        try {
+          const id = await getIdTokenResult(user);
+          if ((id.claims as any)?.admin) navigate("/dashboard");
+          else navigate("/client");
+        } catch (err2) {
+          console.warn("Could not read token claims after Google profile read failure:", err2);
+          navigate("/client");
+        }
       }
     } catch (err: any) {
       // Many browsers / flows may fire a cancelled-popup-request when a popup
@@ -291,6 +317,10 @@ const Auth: React.FC = () => {
       toast.success("Account created! Please sign in.");
       setMode("signin");
       setShowWelcomeBack(true);
+      // Clear shared login fields so the login toggle shows empty inputs
+      setEmail("");
+      setPassword("");
+      setConfirm("");
     } catch (err: any) {
       toast.error(err?.message ?? "Sign up failed");
     } finally {

@@ -112,19 +112,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await updateProfile(cred.user, { displayName: `${firstName} ${lastName}` });
 
     // Create the Firestore user document and await completion (ensures doc exists immediately)
-    await setDoc(doc(firestore, "users", cred.user.uid), {
-      firstName,
-      lastName,
-      email,
-      company: company ?? null,
-      companyDomain: companyDomain ?? null,
-      domain,
-      role, // IMPORTANT: only set to "admin" if validated elsewhere
-      createdAt: new Date().toISOString(),
-    });
+    // Public signup should not be allowed to set elevated roles like "admin" directly.
+    const profileRef = doc(firestore, "users", cred.user.uid);
+    const safeRole: "admin" | "client" = role === "admin" ? "client" : role;
 
-    // Load profile into context
-    await loadProfile(cred.user.uid);
+    // First attempt a minimal, safe merge write (this is most likely allowed by strict rules)
+    try {
+      await setDoc(
+        profileRef,
+        {
+          email,
+          role: safeRole,
+          createdAt: new Date().toISOString(),
+        },
+        { merge: true }
+      );
+    } catch (err) {
+      // If even the minimal merge write is denied, log and continue — do not fail signup.
+      console.warn("Minimal profile write failed during signup (non-blocking):", err);
+    }
+
+    // Then attempt to write the full profile for richer UX, but do not let failures block signup.
+    try {
+      await setDoc(profileRef, {
+        firstName,
+        lastName,
+        email,
+        company: company ?? null,
+        companyDomain: companyDomain ?? null,
+        domain,
+        role: safeRole,
+        createdAt: new Date().toISOString(),
+      });
+    } catch (err) {
+      console.warn("Full profile write failed during signup (non-blocking):", err);
+      // Do not rethrow — many projects restrict writes to some fields; we've already written a minimal profile.
+    }
+
+    // Load profile into context (non-blocking)
+    loadProfile(cred.user.uid).catch((e) => console.warn("loadProfile after signup error:", e));
 
     return cred.user;
   };

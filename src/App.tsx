@@ -61,7 +61,8 @@ const HomeRedirect: React.FC = () => {
     })();
   }, [currentUser, profile, loading, navigate]);
 
-  return <div className="flex h-screen items-center justify-center">Checking session...</div>;
+  // Do not render a blocking loading UI here; return null to avoid a visible buffering screen.
+  return null;
 };
 
 
@@ -72,11 +73,8 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { currentUser, loading } = useAuth();
 
   if (loading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="text-sm text-muted-foreground">Checking session...</div>
-      </div>
-    );
+      // Avoid showing a full-screen buffering message; render nothing while auth initializes.
+      return null;
   }
 
   return currentUser ? <>{children}</> : <Navigate to="/login" replace />;

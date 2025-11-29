@@ -16,13 +16,13 @@ const ClientDashboard: React.FC = () => {
   const navigate = useNavigate();
 
   // local copy of profile for immediate UI edits
-  const [localProfile, setLocalProfile] = useState<any | undefined>(profile);
+  const [localProfile, setLocalProfile] = useState<any>(profile ?? {});
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
 
   useEffect(() => {
-    setLocalProfile(profile);
+    setLocalProfile(profile ?? {});
   }, [profile]);
 
   // Try to get freshest profile once mounted
@@ -35,6 +35,7 @@ const ClientDashboard: React.FC = () => {
         if (snap.exists()) setLocalProfile(snap.data());
       } catch (err) {
         console.warn("Could not load fresh profile:", err);
+        // Leave localProfile as-is so UI falls back to auth info when Firestore is restricted.
       } finally {
         setIsLoadingProfile(false);
       }
@@ -75,17 +76,17 @@ const ClientDashboard: React.FC = () => {
   };
 
   // guard loading / auth
-  if (loading) return <div className="flex h-screen items-center justify-center">Checking session...</div>;
+  if (loading) return null;
   if (!currentUser) return <div className="flex h-screen items-center justify-center">Not signed in</div>;
 
   // derive display values safely
-  const displayName = (localProfile?.firstName ? `${localProfile.firstName}${localProfile?.lastName ? ` ${localProfile.lastName}` : ""}` : "") 
-    || localProfile?.email 
-    || currentUser.displayName 
-    || currentUser.email?.split?.("@")?.[0] 
+  const displayName = (localProfile?.firstName ? `${localProfile.firstName}${localProfile?.lastName ? ` ${localProfile.lastName}` : ""}` : "")
+    || localProfile?.email
+    || currentUser.displayName
+    || currentUser.email?.split?.("@")?.[0]
     || "Client";
 
-  const email = localProfile?.email ?? currentUser.email;
+  const email = localProfile?.email ?? currentUser.email ?? "";
   const domain = localProfile?.domain ?? "—";
   const role = localProfile?.role ?? "client";
 

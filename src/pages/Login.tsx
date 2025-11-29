@@ -10,6 +10,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { toast } from "sonner";
 import { getDoc, doc } from "firebase/firestore";
 import { firestore } from "@/lib/firebase";
+import { getIdTokenResult } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -32,12 +34,38 @@ const Login: React.FC = () => {
         const snap = await getDoc(doc(firestore, "users", user.uid));
         const profile = snap.exists() ? snap.data() : null;
         toast.success("Login successful!");
-        if (profile?.role === "client") navigate("/client");
-        else navigate("/dashboard");
+
+        if (profile && profile.role === "client") {
+          navigate("/client");
+          return;
+        }
+
+        if (profile && profile.role === "admin") {
+          navigate("/dashboard");
+          return;
+        }
+
+        // If profile missing or ambiguous, fall back to token claims
+        try {
+          const id = await getIdTokenResult(auth.currentUser!);
+          if ((id.claims as any)?.admin) navigate("/dashboard");
+          else navigate("/client");
+        } catch (err) {
+          console.warn("Could not read token claims after profile read failure:", err);
+          navigate("/client");
+        }
       } catch (err) {
         console.warn("Profile quick-read failed:", err);
         toast.success("Signed in — loading your data...");
-        navigate("/dashboard");
+        // Prefer client routing when profile read fails, unless token claims indicate admin.
+        try {
+          const id = await getIdTokenResult(user);
+          if ((id.claims as any)?.admin) navigate("/dashboard");
+          else navigate("/client");
+        } catch (err2) {
+          console.warn("Could not read token claims after profile read failure:", err2);
+          navigate("/client");
+        }
       }
     } catch (err: any) {
       console.error("Login error:", err);
