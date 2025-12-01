@@ -12,7 +12,9 @@ const Navbar: React.FC = () => {
             </Link>
             <div className="hidden md:flex space-x-4 text-sm text-muted-foreground">
               <Link to="/reports" className="hover:underline">Reports</Link>
+              <Link to="/about" className="hover:underline">Policies</Link>
               <Link to="/about" className="hover:underline">About</Link>
+              
             </div>
           </div>
 
@@ -22,6 +24,12 @@ const Navbar: React.FC = () => {
               className="rounded-md px-3 py-2 text-sm font-medium bg-gradient-to-r from-primary to-accent-foreground text-white shadow"
             >
               Login/Signup
+            </Link>
+            <Link
+              to="/login"
+              className="rounded-md px-3 py-2 text-sm font-medium bg-gradient-to-r from-primary to-accent-foreground text-white shadow"
+            >
+              Subscribe for Admin Access
             </Link>
           </div>
         </div>
