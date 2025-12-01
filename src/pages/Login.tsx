@@ -29,29 +29,53 @@ const Login: React.FC = () => {
     try {
       const user = await login(email.trim(), password);
 
-      // Attempt quick profile read but do not block UI forever
+      // Wait a bit for profile to load in AuthContext, then check again
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Attempt to read profile from Firestore
       try {
         const snap = await getDoc(doc(firestore, "users", user.uid));
         const profile = snap.exists() ? snap.data() : null;
-        toast.success("Login successful!");
 
-        if (profile && profile.role === "client") {
-          navigate("/client");
+        console.log("Login - User profile:", profile);
+
+        if (profile && profile.role === "super_admin") {
+          toast.success("Welcome Super Admin!");
+          navigate("/super-admin");
           return;
         }
 
         if (profile && profile.role === "admin") {
+          toast.success("Welcome Admin!");
           navigate("/dashboard");
           return;
         }
 
+        if (profile && profile.role === "client") {
+          toast.success("Login successful!");
+          navigate("/client");
+          return;
+        }
+
         // If profile missing or ambiguous, fall back to token claims
+        console.log("Profile not found or role unclear, checking token claims...");
         try {
           const id = await getIdTokenResult(auth.currentUser!);
-          if ((id.claims as any)?.admin) navigate("/dashboard");
-          else navigate("/client");
+          console.log("Token claims:", id.claims);
+          
+          if ((id.claims as any)?.super_admin) {
+            toast.success("Welcome Super Admin!");
+            navigate("/super-admin");
+          } else if ((id.claims as any)?.admin) {
+            toast.success("Welcome Admin!");
+            navigate("/dashboard");
+          } else {
+            toast.success("Login successful!");
+            navigate("/client");
+          }
         } catch (err) {
           console.warn("Could not read token claims after profile read failure:", err);
+          toast.success("Login successful!");
           navigate("/client");
         }
       } catch (err) {
@@ -60,7 +84,8 @@ const Login: React.FC = () => {
         // Prefer client routing when profile read fails, unless token claims indicate admin.
         try {
           const id = await getIdTokenResult(user);
-          if ((id.claims as any)?.admin) navigate("/dashboard");
+          if ((id.claims as any)?.super_admin) navigate("/super-admin");
+          else if ((id.claims as any)?.admin) navigate("/dashboard");
           else navigate("/client");
         } catch (err2) {
           console.warn("Could not read token claims after profile read failure:", err2);

@@ -1,0 +1,55 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Presence tracking for online status
+    match /presence/{sessionId} {
+      allow create: if request.auth != null
+                    && request.resource.data.uid == request.auth.uid
+                    && request.resource.data.sessionId == sessionId
+                    && request.resource.data.lastSeen is timestamp;
+      allow update: if request.auth != null
+                    && resource.data.uid == request.auth.uid
+                    && request.resource.data.lastSeen is timestamp;
+      allow delete: if request.auth != null
+                    && resource.data.uid == request.auth.uid;
+      allow read: if request.auth != null;
+    }
+
+    // Users collection - CRITICAL for login
+    match /users/{userId} {
+      // Users can read/write their own profile
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      // Allow reading other users (needed for admin features)
+      allow read: if request.auth != null;
+    }
+
+    // Admin approval documents
+    match /approval_documents/{documentId} {
+      // Anyone can submit (for admin registration)
+      allow create: if true;
+      // Only authenticated users can read
+      allow read, write: if request.auth != null;
+    }
+    
+    // Audit logs
+    match /audit_logs/{logId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Policies
+    match /policies/{policyId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Shared data
+    match /shared_data/{dataId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Allow all other collections for authenticated users (DEVELOPMENT MODE)
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}

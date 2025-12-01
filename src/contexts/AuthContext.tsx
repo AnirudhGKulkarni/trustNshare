@@ -20,7 +20,7 @@ type SignupData = {
   company?: string | null;
   companyDomain?: string | null;
   domain: string;
-  role: "admin" | "client";
+  role: "admin" | "client" | "super_admin";
 };
 
 type AuthContextType = {
@@ -61,13 +61,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // This avoids incorrectly assigning 'client' to admin users who were
       // provisioned via server-side (Admin SDK) custom claims but don't yet
       // have a Firestore profile document.
-      let inferredRole: "admin" | "client" = "client";
+      let inferredRole: "admin" | "client" | "super_admin" = "client";
       try {
         // Try to read token claims from the currently-signed-in user
         // (non-blocking if unavailable).
         if (auth.currentUser) {
           const id = await auth.currentUser.getIdTokenResult();
-          if ((id.claims as any)?.admin) inferredRole = "admin";
+          if ((id.claims as any)?.super_admin) inferredRole = "super_admin";
+          else if ((id.claims as any)?.admin) inferredRole = "admin";
         }
       } catch (err) {
         // If token claim read fails, fall back to client role.
@@ -95,11 +96,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // login: signs in and triggers profile load (non-blocking)
+  // login: signs in and waits for profile load to complete
   const login = async (email: string, password: string) => {
     const cred = await signInWithEmailAndPassword(auth, email, password);
-    // start loading profile in background (do not let callers block on a slow network)
-    loadProfile(cred.user.uid).catch((e) => console.warn("loadProfile after login error:", e));
+    // Wait for profile to load before returning
+    await loadProfile(cred.user.uid);
     return cred.user;
   };
 
@@ -112,9 +113,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await updateProfile(cred.user, { displayName: `${firstName} ${lastName}` });
 
     // Create the Firestore user document and await completion (ensures doc exists immediately)
-    // Public signup should not be allowed to set elevated roles like "admin" directly.
+    // Public signup should not be allowed to set elevated roles like "admin" or "super_admin" directly.
     const profileRef = doc(firestore, "users", cred.user.uid);
-    const safeRole: "admin" | "client" = role === "admin" ? "client" : role;
+    const safeRole: "admin" | "client" | "super_admin" = (role === "admin" || role === "super_admin") ? "client" : role;
 
     // First attempt a minimal, safe merge write (this is most likely allowed by strict rules)
     try {

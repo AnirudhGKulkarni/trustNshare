@@ -28,6 +28,9 @@ import ClientShare from "./pages/ClientShare";
 import NotFound from "./pages/NotFound";
 import FrontPage from "./pages/FrontPage";
 import adminSignup from "./pages/adminSignup";
+import SuperAdminDashboard from "./pages/SuperAdminDashboard";
+import AdminApproval from "./pages/AdminApproval";
+import EnhancedAuditLogs from "./pages/EnhancedAuditLogs";
 
 // components
 import { RoleProtectedRoute } from "./components/RoleProtectedRoute";
@@ -49,13 +52,24 @@ const HomeRedirect: React.FC = () => {
       return;
     }
 
-    if (profile?.role === "client") {
-      navigate("/client", { replace: true });
+    // Add console log for debugging
+    console.log("HomeRedirect - Profile:", profile);
+
+    if (profile?.role === "super_admin") {
+      console.log("Redirecting to super admin dashboard");
+      navigate("/super-admin", { replace: true });
       return;
     }
 
     if (profile?.role === "admin") {
+      console.log("Redirecting to admin dashboard");
       navigate("/dashboard", { replace: true });
+      return;
+    }
+
+    if (profile?.role === "client") {
+      console.log("Redirecting to client dashboard");
+      navigate("/client", { replace: true });
       return;
     }
 
@@ -63,11 +77,20 @@ const HomeRedirect: React.FC = () => {
     (async () => {
       try {
         const token = await getIdTokenResult(auth.currentUser!);
-        if ((token.claims as any)?.admin) navigate("/dashboard", { replace: true });
-        else navigate("/client", { replace: true });
+        console.log("HomeRedirect - Token claims:", token.claims);
+        if ((token.claims as any)?.super_admin) {
+          console.log("Token claims: super_admin found");
+          navigate("/super-admin", { replace: true });
+        } else if ((token.claims as any)?.admin) {
+          console.log("Token claims: admin found");
+          navigate("/dashboard", { replace: true });
+        } else {
+          console.log("Token claims: defaulting to client");
+          navigate("/client", { replace: true });
+        }
       } catch (err) {
         console.warn("Token error:", err);
-        navigate("/dashboard", { replace: true });
+        navigate("/client", { replace: true });
       }
     })();
   }, [currentUser, profile, loading, navigate]);
@@ -165,6 +188,32 @@ const App = () => (
                 <ProtectedRoute>
                   <Settings />
                 </ProtectedRoute>
+              }
+            />
+
+            {/* Super Admin routes */}
+            <Route
+              path="/super-admin"
+              element={
+                <RoleProtectedRoute requiredRole="super_admin">
+                  <SuperAdminDashboard />
+                </RoleProtectedRoute>
+              }
+            />
+            <Route
+              path="/super-admin/approvals"
+              element={
+                <RoleProtectedRoute requiredRole="super_admin">
+                  <AdminApproval />
+                </RoleProtectedRoute>
+              }
+            />
+            <Route
+              path="/super-admin/audit"
+              element={
+                <RoleProtectedRoute requiredRole="super_admin">
+                  <EnhancedAuditLogs />
+                </RoleProtectedRoute>
               }
             />
 
