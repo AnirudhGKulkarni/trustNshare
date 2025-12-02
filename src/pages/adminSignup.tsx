@@ -1,7 +1,7 @@
 // src/pages/adminSignup.tsx
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Shield, User, Briefcase, Mail, Upload, X } from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
+import { Shield, User, Briefcase, Mail, Upload, X, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -124,11 +124,16 @@ const AdminSignup: React.FC = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-secondary to-accent p-6">
-      <Card className="w-full max-w-lg shadow-elevated">
+    <div className="relative flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-950 via-gray-900 to-gray-800 p-6 text-gray-100">
+      {/* Back to Home */}
+      <Link to="/" className="absolute top-4 left-4 z-50 inline-flex items-center gap-2 rounded-lg border border-gray-700 bg-gray-900/70 px-3 py-2 text-sm hover:bg-gray-800 hover:border-blue-500 transition-colors">
+        <ArrowLeft className="w-4 h-4" />
+        Home
+      </Link>
+      <Card className="w-full max-w-lg shadow-elevated bg-gray-900 text-gray-100 border border-gray-800">
         <CardHeader className="space-y-4 text-center">
           <div className="mx-auto flex items-center gap-3">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-accent-foreground shadow-lg">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-purple-600 shadow-lg">
               <Shield className="h-8 w-8 text-white" />
             </div>
             <div className="text-lg font-semibold">SecureShare</div>
@@ -244,12 +249,12 @@ const AdminSignup: React.FC = () => {
                 <Label>Uploaded documents ({uploadedDocuments.length})</Label>
                 <div className="space-y-2 max-h-40 overflow-y-auto">
                   {uploadedDocuments.map((doc, index) => (
-                    <div key={index} className="flex items-center justify-between p-2 bg-muted rounded-md">
+                    <div key={index} className="flex items-center justify-between p-2 bg-gray-800 rounded-md border border-gray-700">
                       <span className="text-sm truncate flex-1">{doc.name}</span>
                       <button
                         type="button"
                         onClick={() => removeDocument(index)}
-                        className="ml-2 p-1 hover:bg-background rounded transition-colors"
+                        className="ml-2 p-1 hover:bg-gray-900 rounded transition-colors"
                       >
                         <X className="h-4 w-4 text-muted-foreground" />
                       </button>
@@ -263,7 +268,7 @@ const AdminSignup: React.FC = () => {
               {isLoading ? "Submitting..." : "Submit for Approval"}
             </Button>
 
-            <p className="mt-6 text-center text-sm text-muted-foreground">
+            <p className="mt-6 text-center text-sm text-gray-400">
               SecureShare helps teams and individuals store, share, and control access to important documents with end-to-end security and audit trails.
             </p>
           </form>

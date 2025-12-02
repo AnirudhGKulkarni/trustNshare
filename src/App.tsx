@@ -27,6 +27,7 @@ import ClientSettings from "./pages/ClientSettings";
 import ClientShare from "./pages/ClientShare";
 import NotFound from "./pages/NotFound";
 import FrontPage from "./pages/FrontPage";
+import Pricing from "./pages/Pricing";
 import adminSignup from "./pages/adminSignup";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import AdminApproval from "./pages/AdminApproval";
@@ -134,6 +135,7 @@ const App = () => (
 
             {/* ⭐ PUBLIC FRONT PAGE ⭐ */}
             <Route path="/" element={<FrontPage />} />
+            <Route path="/pricing" element={<Pricing />} />
 
             {/* Auth pages */}
             <Route path="/login" element={<Login />} />

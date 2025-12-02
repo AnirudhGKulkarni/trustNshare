@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
-import { Shield, User, Briefcase, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
+import { Shield, User, Briefcase, Mail, Lock, Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -348,24 +348,46 @@ const Auth: React.FC = () => {
   };
 
   return (
-    <div className="flex min-h-screen w-screen items-stretch bg-gradient-to-br from-background via-secondary to-accent">
-      <Card className="w-full max-w-none min-h-screen md:rounded-xl md:shadow-elevated rounded-none shadow-none">
+    <div className="relative flex min-h-screen w-screen items-stretch bg-gradient-to-br from-gray-950 via-gray-900 to-gray-800 text-gray-100">
+      {/* Back to Home */}
+      <Link to="/" className="absolute top-4 left-4 z-50 inline-flex items-center gap-2 rounded-lg border border-gray-700 bg-gray-900/70 px-3 py-2 text-sm hover:bg-gray-800 hover:border-blue-500 transition-colors">
+        <ArrowLeft className="w-4 h-4" />
+        Home
+      </Link>
+
+      <Card className="w-full max-w-none min-h-screen md:rounded-xl md:shadow-elevated rounded-none shadow-none bg-gray-900 text-gray-100 border border-gray-800">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-0 h-full">
           <div className="p-6 md:p-10 flex flex-col justify-center items-center">
             <div className="w-full max-w-md">
             <CardHeader className="space-y-4 text-center">
               <div className="mx-auto flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-accent-foreground shadow-sm">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-purple-600 shadow-sm">
                   <Shield className="h-6 w-6 text-white" />
                 </div>
                 <div className="text-lg font-semibold">SecureShare</div>
               </div>
 
               <div className="pt-2">
-                <div className="flex items-center justify-center gap-2 rounded-full bg-muted p-1 w-max mx-auto">
-                    <button onClick={() => { setMode("signin"); setShowWelcomeBack(false); }} className={`px-4 py-1 text-sm rounded-full ${mode === 'signin' ? 'bg-background font-semibold' : 'hover:bg-muted/50'}`}>Login</button>
-                    <button onClick={() => setMode("signup")} className={`px-4 py-1 text-sm rounded-full ${mode === 'signup' ? 'bg-background font-semibold' : 'hover:bg-muted/50'}`}>Signup</button>
-                  </div>
+                <div className="flex items-center justify-center gap-2 rounded-full bg-gray-800/80 border border-gray-700 p-1 w-max mx-auto">
+                  <button
+                    type="button"
+                    onClick={() => { setMode('signin'); setShowWelcomeBack(false); }}
+                    className={`px-4 py-1 text-sm rounded-full transition-colors ${
+                      mode === 'signin' ? 'bg-gray-900 text-gray-100 border border-blue-500/40 shadow-sm' : 'text-gray-300 hover:bg-gray-800'
+                    }`}
+                  >
+                    Login
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMode('signup')}
+                    className={`px-4 py-1 text-sm rounded-full transition-colors ${
+                      mode === 'signup' ? 'bg-gray-900 text-gray-100 border border-blue-500/40 shadow-sm' : 'text-gray-300 hover:bg-gray-800'
+                    }`}
+                  >
+                    Signup
+                  </button>
+                </div>
 
                 <CardTitle className="text-2xl font-bold mt-4">{mode === 'signin' ? (showWelcomeBack ? 'Welcome back to SecureShare' : 'Welcome to SecureShare') : 'Welcome to SecureShare'}</CardTitle>
                 <CardDescription className="text-base mt-2">
@@ -382,29 +404,29 @@ const Auth: React.FC = () => {
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input id="email" type="email" placeholder="name@company.com" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10" required />
+                      <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                      <Input id="email" type="email" placeholder="name@company.com" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10 bg-gray-900 border border-gray-700 text-gray-100 placeholder-gray-500" required />
                     </div>
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="password">Password</Label>
                     <div className="relative">
-                      <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                       <Input
                         id="password"
                         type={showPassword ? "text" : "password"}
                         placeholder="••••••••"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="pl-10 pr-10"
+                        className="pl-10 pr-10 bg-gray-900 border border-gray-700 text-gray-100 placeholder-gray-500"
                         required
                       />
                       <button
                         type="button"
                         aria-label={showPassword ? "Hide password" : "Show password"}
                         onClick={() => setShowPassword((s) => !s)}
-                        className="absolute right-3 top-3 flex items-center text-muted-foreground"
+                        className="absolute right-3 top-3 flex items-center text-gray-400"
                       >
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
@@ -450,15 +472,15 @@ const Auth: React.FC = () => {
                     <div>
                       <Label>First name</Label>
                       <div className="relative">
-                        <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input className="pl-10" value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
+                        <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                        <Input className="pl-10 bg-gray-900 border border-gray-700 text-gray-100 placeholder-gray-500" value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
                       </div>
                     </div>
                     <div>
                       <Label>Last name</Label>
                       <div className="relative">
-                        <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input className="pl-10" value={lastName} onChange={(e) => setLastName(e.target.value)} required />
+                        <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                        <Input className="pl-10 bg-gray-900 border border-gray-700 text-gray-100 placeholder-gray-500" value={lastName} onChange={(e) => setLastName(e.target.value)} required />
                       </div>
                     </div>
                   </div>
@@ -466,8 +488,8 @@ const Auth: React.FC = () => {
                   <div>
                     <Label>Name of your company</Label>
                     <div className="relative">
-                      <Briefcase className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input className="pl-10" value={company} onChange={(e) => setCompany(e.target.value)} />
+                      <Briefcase className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                      <Input className="pl-10 bg-gray-900 border border-gray-700 text-gray-100 placeholder-gray-500" value={company} onChange={(e) => setCompany(e.target.value)} />
                     </div>
                   </div>
 
@@ -477,7 +499,7 @@ const Auth: React.FC = () => {
                         <select
                           value={domain}
                           onChange={(e) => setDomain(e.target.value)}
-                          className="w-full rounded-md border px-3 py-2"
+                          className="w-full rounded-md border px-3 py-2 bg-gray-900 border-gray-700 text-gray-100"
                           required
                         >
                           <option value="" disabled>Select</option>
@@ -506,7 +528,7 @@ const Auth: React.FC = () => {
                     <div>
                       <Label>Specify functional category</Label>
                       <div className="relative">
-                        <Input className="pl-3" value={customCategory} onChange={(e) => setCustomCategory(e.target.value)} placeholder="Enter functional category" />
+                        <Input className="pl-3 bg-gray-900 border border-gray-700 text-gray-100 placeholder-gray-500" value={customCategory} onChange={(e) => setCustomCategory(e.target.value)} placeholder="Enter functional category" />
                       </div>
                     </div>
                   )}
@@ -514,8 +536,8 @@ const Auth: React.FC = () => {
                   <div>
                     <Label>Email</Label>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input className="pl-10" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                      <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                      <Input className="pl-10 bg-gray-900 border border-gray-700 text-gray-100 placeholder-gray-500" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
                     </div>
                   </div>
 
@@ -523,15 +545,15 @@ const Auth: React.FC = () => {
                     <div>
                       <Label>Password</Label>
                       <div className="relative">
-                        <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                         <Input
-                          className="pl-10 pr-10"
+                          className="pl-10 pr-10 bg-gray-900 border border-gray-700 text-gray-100 placeholder-gray-500"
                           type={showPassword ? "text" : "password"}
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
                           required
                         />
-                        <button type="button" aria-label={showPassword ? "Hide password" : "Show password"} onClick={() => setShowPassword((s) => !s)} className="absolute right-3 top-3 flex items-center text-muted-foreground">
+                        <button type="button" aria-label={showPassword ? "Hide password" : "Show password"} onClick={() => setShowPassword((s) => !s)} className="absolute right-3 top-3 flex items-center text-gray-400">
                           {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </button>
                       </div>
@@ -539,8 +561,8 @@ const Auth: React.FC = () => {
                     <div>
                       <Label>Confirm Password</Label>
                       <div className="relative">
-                        <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input className="pl-10 pr-10" type={showPassword ? "text" : "password"} value={confirm} onChange={(e) => setConfirm(e.target.value)} required />
+                        <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                        <Input className="pl-10 pr-10 bg-gray-900 border border-gray-700 text-gray-100 placeholder-gray-500" type={showPassword ? "text" : "password"} value={confirm} onChange={(e) => setConfirm(e.target.value)} required />
                       </div>
                     </div>
                   </div>
@@ -584,9 +606,9 @@ const Auth: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50 p-6 md:sticky md:top-0 md:h-screen">
+          <div className="flex items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800 p-6 md:sticky md:top-0 md:h-screen">
             <div className="p-4 md:p-8 w-full flex items-center justify-center h-full">
-              <div className="bg-white rounded-xl shadow-lg p-6 flex items-center justify-center w-full h-full max-w-5xl">
+              <div className="bg-gray-900 border border-gray-800 rounded-xl shadow-lg p-6 flex items-center justify-center w-full h-full max-w-5xl">
                 <div className="w-full h-full flex items-center justify-center relative">
                   <div className="overflow-hidden rounded-md w-full h-full flex items-center justify-center">
                     <div className="w-full h-full flex items-center justify-center">
@@ -600,20 +622,20 @@ const Auth: React.FC = () => {
                   </div>
 
                   <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10">
-                    <button onClick={() => setCurrent((c) => (c - 1 + carouselItems.length) % carouselItems.length)} className="bg-white rounded-full p-3 shadow">
+                    <button onClick={() => setCurrent((c) => (c - 1 + carouselItems.length) % carouselItems.length)} className="bg-gray-800 text-gray-100 rounded-full p-3 shadow border border-gray-700 hover:border-blue-500">
                       ‹
                     </button>
                   </div>
 
                   <div className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10">
-                    <button onClick={() => setCurrent((c) => (c + 1) % carouselItems.length)} className="bg-white rounded-full p-3 shadow">
+                    <button onClick={() => setCurrent((c) => (c + 1) % carouselItems.length)} className="bg-gray-800 text-gray-100 rounded-full p-3 shadow border border-gray-700 hover:border-blue-500">
                       ›
                     </button>
                   </div>
 
                   <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex gap-3 z-10">
                     {carouselItems.map((_, i) => (
-                      <button key={i} onClick={() => setCurrent(i)} className={`w-3 h-3 rounded-full ${i === current ? 'bg-primary' : 'bg-border'}`} />
+                      <button key={i} onClick={() => setCurrent(i)} className={`w-3 h-3 rounded-full ${i === current ? 'bg-blue-500' : 'bg-gray-700'}`} />
                     ))}
                   </div>
                 </div>
