@@ -155,14 +155,14 @@ const AdminSignup: React.FC = () => {
                 <Label>First name</Label>
                 <div className="relative">
                   <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input className="pl-10" value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
+                  <Input className="pl-10 bg-background text-foreground border-border placeholder:text-muted-foreground" value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
                 </div>
               </div>
               <div>
                 <Label>Last name</Label>
                 <div className="relative">
                   <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input className="pl-10" value={lastName} onChange={(e) => setLastName(e.target.value)} required />
+                  <Input className="pl-10 bg-background text-foreground border-border placeholder:text-muted-foreground" value={lastName} onChange={(e) => setLastName(e.target.value)} required />
                 </div>
               </div>
             </div>
@@ -172,7 +172,7 @@ const AdminSignup: React.FC = () => {
                 <Label>Name of your company</Label>
                 <div className="relative">
                   <Briefcase className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input className="pl-10" value={company} onChange={(e) => setCompany(e.target.value)} required />
+                  <Input className="pl-10 bg-background text-foreground border-border placeholder:text-muted-foreground" value={company} onChange={(e) => setCompany(e.target.value)} required />
                 </div>
               </div>
             </div>
@@ -183,7 +183,7 @@ const AdminSignup: React.FC = () => {
                 <select
                   value={domain}
                   onChange={(e) => setDomain(e.target.value as typeof domainOptions[number])}
-                  className="w-full rounded-md border px-3 py-2"
+                  className="w-full rounded-md border px-3 py-2 bg-background text-foreground border-border"
                 >
                   {domainOptions.map((d) => (
                     <option key={d} value={d}>
@@ -199,7 +199,7 @@ const AdminSignup: React.FC = () => {
                 <Label>Specify functional category</Label>
                 <div className="relative">
                   <Input
-                    className="pl-3"
+                    className="pl-3 bg-background text-foreground border-border placeholder:text-muted-foreground"
                     value={customCategory}
                     onChange={(e) => setCustomCategory(e.target.value)}
                     placeholder="Enter functional category"
@@ -212,7 +212,7 @@ const AdminSignup: React.FC = () => {
               <Label>Email</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input className="pl-10" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                <Input className="pl-10 bg-background text-foreground border-border placeholder:text-muted-foreground" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
               </div>
             </div>
 
@@ -224,7 +224,7 @@ const AdminSignup: React.FC = () => {
                 </a>
               </div>
               <div className="relative">
-                <label className="flex items-center justify-center w-full px-3 py-3 border-2 border-dashed rounded-md cursor-pointer hover:border-primary transition-colors">
+                <label className="flex items-center justify-center w-full px-3 py-3 border-2 border-dashed rounded-md cursor-pointer hover:border-primary transition-colors bg-background text-foreground border-border">
                   <div className="flex items-center gap-2">
                     <Upload className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm text-muted-foreground">Click to upload or drag and drop</span>

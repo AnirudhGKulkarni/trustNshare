@@ -29,7 +29,7 @@ const ForgotPassword: React.FC = () => {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-secondary to-accent p-6">
-      <Card className="w-full max-w-md shadow-elevated">
+      <Card className="w-full max-w-md shadow-elevated bg-card text-foreground">
         <CardHeader className="space-y-4 text-center">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-accent-foreground shadow-lg">
             <Shield className="h-8 w-8 text-white" />
@@ -43,18 +43,18 @@ const ForgotPassword: React.FC = () => {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label>Email</Label>
+              <Label className="text-foreground">Email</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input className="pl-10" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                <Input className="pl-10 bg-background text-foreground border-border placeholder:text-muted-foreground" value={email} onChange={(e) => setEmail(e.target.value)} required />
               </div>
             </div>
 
             <div className="flex items-center justify-between">
-              <Link to="/login" className="text-sm underline">Back to login</Link>
+              <Link to="/login" className="text-sm underline text-primary hover:text-accent-foreground">Back to login</Link>
             </div>
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" className="w-full bg-gradient-to-r from-primary to-accent-foreground" disabled={isLoading}>
               {isLoading ? "Sending..." : "Send reset email"}
             </Button>
           </form>
