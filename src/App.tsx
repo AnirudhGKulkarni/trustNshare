@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { getIdTokenResult } from "firebase/auth";
@@ -124,6 +124,15 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 // ------------------------
 // Main App Component
 // ------------------------
+const ScrollToTop: React.FC = () => {
+  const { pathname } = useLocation();
+  React.useEffect(() => {
+    // Scroll to top on every path change (navbar route clicks)
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [pathname]);
+  return null;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
@@ -132,6 +141,7 @@ const App = () => (
         <Sonner />
 
         <BrowserRouter>
+          <ScrollToTop />
           <Routes>
 
             {/* ⭐ PUBLIC FRONT PAGE ⭐ */}

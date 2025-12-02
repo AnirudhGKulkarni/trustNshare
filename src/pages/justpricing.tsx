@@ -7,8 +7,8 @@ import { firestore } from "@/lib/firebase";
 const plans = [
   {
     name: "Starter",
-    price: "₹2,999",
-    period: "per user/year",
+    price: "₹2,250",
+    period: "per user/month",
     description: "Perfect for small teams",
     features: [
       "Up to 5 users",
@@ -21,8 +21,8 @@ const plans = [
   },
   {
     name: "Professional",
-    price: "₹7,999",
-    period: "per user/year",
+    price: "₹5,550",
+    period: "per user/month",
     description: "For growing businesses",
     features: [
       "Unlimited users",
@@ -90,7 +90,7 @@ const JustPricing: React.FC = () => {
                 <ul className="space-y-4">
                   {plan.features.map((f) => (
                     <li key={f} className="flex items-center gap-3">
-                      <CheckCircle className={`w-5 h-5 ${plan.featured ? "text-blue-200" : "text-green-500"}`} />
+                      <CheckCircle className={`w-5 h-5 ${plan.featured ? "text-green-400" : "text-green-500"}`} />
                       <span className={plan.featured ? "text-blue-50" : ""}>{f}</span>
                     </li>
                   ))}
