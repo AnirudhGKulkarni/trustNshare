@@ -15,6 +15,14 @@ const FrontNavbar: React.FC<FrontNavbarProps> = ({ isDarkMode = false, onThemeTo
     setOpenDropdown(openDropdown === menu ? null : menu);
   };
 
+  const scrollToHash = (hash: string) => {
+    const id = hash.startsWith('#') ? hash.slice(1) : hash;
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
   const navItems = [
     { label: "Home", href: "/" },
     {
@@ -39,7 +47,7 @@ const FrontNavbar: React.FC<FrontNavbarProps> = ({ isDarkMode = false, onThemeTo
         { label: "For Legal", href: "#legal" },
       ],
     },
-    { label: "Pricing", href: "/pricing" },
+    { label: "Pricing", href: "/justpricing" },
     { label: "About", href: "#about" },
   ];
 
@@ -69,49 +77,75 @@ const FrontNavbar: React.FC<FrontNavbarProps> = ({ isDarkMode = false, onThemeTo
           <div className={`hidden lg:flex space-x-1 transition-all duration-300 ${
             isDarkMode ? "text-gray-300" : "text-gray-700"
           }`}>
-            {navItems.map((item) => (
-              <div key={item.label} className="relative group">
-                <button
-                  onClick={() => item.hasDropdown && toggleDropdown(item.label)}
-                  className={`px-4 py-2 rounded-lg transition-all duration-300 flex items-center gap-1 font-medium ${
-                    isDarkMode
-                      ? "text-gray-300 hover:text-white hover:bg-gray-800/50"
-                      : "text-gray-700 hover:text-blue-600 hover:bg-gray-100/50"
-                  }`}
-                >
-                  {item.label}
-                  {item.hasDropdown && (
-                    <ChevronDown className="w-4 h-4 transition-transform duration-300 group-hover:rotate-180" />
-                  )}
-                </button>
-
-                {/* Dropdown Menu with smooth animation */}
-                {item.hasDropdown && item.submenu && (
-                  <div
-                    className={`absolute left-0 mt-2 w-56 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 py-2 border ${
-                      isDarkMode 
-                        ? "bg-gray-800/95 border-gray-700 shadow-2xl" 
-                        : "bg-white/95 border-gray-100 shadow-2xl"
-                    }`}
-                  >
-                    {item.submenu.map((subitem, idx) => (
-                      <Link
-                        key={subitem.label}
-                        to={subitem.href}
-                        className={`block px-4 py-3 text-sm transition-all duration-300 ${
+            {navItems.map((item) => {
+              const isAnchor = item.href.startsWith('#');
+              return (
+                <div key={item.label} className="relative group">
+                  {item.hasDropdown ? (
+                    <>
+                      <button
+                        onClick={() => toggleDropdown(item.label)}
+                        className={`px-4 py-2 rounded-lg transition-all duration-300 flex items-center gap-1 font-medium ${
                           isDarkMode
-                            ? "text-gray-300 hover:text-white hover:bg-gray-700/50"
-                            : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
-                        } ${idx === 0 ? "rounded-t-lg" : ""} ${idx === item.submenu.length - 1 ? "rounded-b-lg" : ""}`}
-                        onClick={() => setOpenDropdown(null)}
+                            ? "text-gray-300 hover:text-white hover:bg-gray-800/50"
+                            : "text-gray-700 hover:text-blue-600 hover:bg-gray-100/50"
+                        }`}
                       >
-                        {subitem.label}
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
+                        {item.label}
+                        <ChevronDown className="w-4 h-4 transition-transform duration-300 group-hover:rotate-180" />
+                      </button>
+                      {/* Dropdown Menu with smooth animation */}
+                      {item.submenu && (
+                        <div
+                          className={`absolute left-0 mt-2 w-56 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 py-2 border ${
+                            isDarkMode 
+                              ? "bg-gray-800/95 border-gray-700 shadow-2xl" 
+                              : "bg-white/95 border-gray-100 shadow-2xl"
+                          }`}
+                        >
+                          {item.submenu.map((subitem, idx) => (
+                            <Link
+                              key={subitem.label}
+                              to={subitem.href}
+                              className={`block px-4 py-3 text-sm transition-all duration-300 ${
+                                isDarkMode
+                                  ? "text-gray-300 hover:text-white hover:bg-gray-700/50"
+                                  : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
+                              } ${idx === 0 ? "rounded-t-lg" : ""} ${idx === item.submenu.length - 1 ? "rounded-b-lg" : ""}`}
+                              onClick={() => setOpenDropdown(null)}
+                            >
+                              {subitem.label}
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  ) : isAnchor ? (
+                    <button
+                      onClick={() => scrollToHash(item.href)}
+                      className={`px-4 py-2 rounded-lg transition-all duration-300 flex items-center gap-1 font-medium ${
+                        isDarkMode
+                          ? "text-gray-300 hover:text-white hover:bg-gray-800/50"
+                          : "text-gray-700 hover:text-blue-600 hover:bg-gray-100/50"
+                      }`}
+                    >
+                      {item.label}
+                    </button>
+                  ) : (
+                    <Link
+                      to={item.href}
+                      className={`px-4 py-2 rounded-lg transition-all duration-300 flex items-center gap-1 font-medium ${
+                        isDarkMode
+                          ? "text-gray-300 hover:text-white hover:bg-gray-800/50"
+                          : "text-gray-700 hover:text-blue-600 hover:bg-gray-100/50"
+                      }`}
+                    >
+                      {item.label}
+                    </Link>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
           {/* Right Side - Auth */}
@@ -155,44 +189,75 @@ const FrontNavbar: React.FC<FrontNavbarProps> = ({ isDarkMode = false, onThemeTo
           <div className={`lg:hidden pb-4 border-t animate-slide-in-left ${
             isDarkMode ? "border-gray-800" : "border-gray-200"
           }`}>
-            {navItems.map((item) => (
-              <div key={item.label}>
-                <button
-                  onClick={() => item.hasDropdown && toggleDropdown(item.label)}
-                  className={`w-full text-left px-4 py-3 rounded-lg transition-all duration-300 flex items-center justify-between font-medium ${
-                    isDarkMode
-                      ? "text-gray-300 hover:text-white hover:bg-gray-800/50"
-                      : "text-gray-700 hover:text-blue-600 hover:bg-gray-100/50"
-                  }`}
-                >
-                  {item.label}
-                  {item.hasDropdown && (
-                    <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${
-                      openDropdown === item.label ? "rotate-180" : ""
-                    }`} />
-                  )}
-                </button>
-
-                {item.hasDropdown && openDropdown === item.label && item.submenu && (
-                  <div className="pl-4 mt-1 animate-slide-in-left">
-                    {item.submenu.map((subitem) => (
-                      <Link
-                        key={subitem.label}
-                        to={subitem.href}
-                        className={`block px-4 py-2 text-sm rounded-lg transition-all duration-300 ${
+            {navItems.map((item) => {
+              const isAnchor = item.href.startsWith('#');
+              return (
+                <div key={item.label}>
+                  {item.hasDropdown ? (
+                    <>
+                      <button
+                        onClick={() => toggleDropdown(item.label)}
+                        className={`w-full text-left px-4 py-3 rounded-lg transition-all duration-300 flex items-center justify-between font-medium ${
                           isDarkMode
-                            ? "text-gray-400 hover:text-gray-200 hover:bg-gray-700/50"
-                            : "text-gray-600 hover:text-blue-600 hover:bg-gray-50"
+                            ? "text-gray-300 hover:text-white hover:bg-gray-800/50"
+                            : "text-gray-700 hover:text-blue-600 hover:bg-gray-100/50"
                         }`}
-                        onClick={() => setMobileMenuOpen(false)}
                       >
-                        {subitem.label}
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
+                        {item.label}
+                        <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${
+                          openDropdown === item.label ? "rotate-180" : ""
+                        }`} />
+                      </button>
+
+                      {openDropdown === item.label && item.submenu && (
+                        <div className="pl-4 mt-1 animate-slide-in-left">
+                          {item.submenu.map((subitem) => (
+                            <Link
+                              key={subitem.label}
+                              to={subitem.href}
+                              className={`block px-4 py-2 text-sm rounded-lg transition-all duration-300 ${
+                                isDarkMode
+                                  ? "text-gray-400 hover:text-gray-200 hover:bg-gray-700/50"
+                                  : "text-gray-600 hover:text-blue-600 hover:bg-gray-50"
+                              }`}
+                              onClick={() => setMobileMenuOpen(false)}
+                            >
+                              {subitem.label}
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  ) : isAnchor ? (
+                    <button
+                      onClick={() => {
+                        scrollToHash(item.href);
+                        setMobileMenuOpen(false);
+                      }}
+                      className={`w-full text-left px-4 py-3 rounded-lg transition-all duration-300 flex items-center justify-between font-medium ${
+                        isDarkMode
+                          ? "text-gray-300 hover:text-white hover:bg-gray-800/50"
+                          : "text-gray-700 hover:text-blue-600 hover:bg-gray-100/50"
+                      }`}
+                    >
+                      {item.label}
+                    </button>
+                  ) : (
+                    <Link
+                      to={item.href}
+                      className={`w-full text-left px-4 py-3 rounded-lg transition-all duration-300 flex items-center justify-between font-medium ${
+                        isDarkMode
+                          ? "text-gray-300 hover:text-white hover:bg-gray-800/50"
+                          : "text-gray-700 hover:text-blue-600 hover:bg-gray-100/50"
+                      }`}
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      {item.label}
+                    </Link>
+                  )}
+                </div>
+              );
+            })}
 
             {/* Mobile Auth Buttons */}
             <div className={`px-4 py-4 border-t gap-2 flex flex-col ${

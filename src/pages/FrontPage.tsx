@@ -567,9 +567,19 @@ const FrontPage: React.FC = () => {
                 Terms and Conditions
               </a>
             </div>
-            <p className="flex items-center gap-2">
-              <span className="text-blue-400">©</span> 2025 SecureShare. All rights reserved.
-            </p>
+            <div className="flex items-center gap-4">
+              <button
+                type="button"
+                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                className="rounded-full px-4 py-2 border border-gray-600 text-gray-300 hover:text-white hover:border-blue-400 hover:bg-blue-400/10 transition"
+                aria-label="Back to top"
+              >
+                Back to top
+              </button>
+              <p className="flex items-center gap-2">
+                <span className="text-blue-400">©</span> 2025 SecureShare. All rights reserved.
+              </p>
+            </div>
           </div>
         </div>
       </footer>
