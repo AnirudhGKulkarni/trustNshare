@@ -136,11 +136,11 @@ const AdminSignup: React.FC = () => {
             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-purple-600 shadow-lg">
               <Shield className="h-8 w-8 text-white" />
             </div>
-            <div className="text-lg font-semibold">SecureShare</div>
+            <div className="text-lg font-semibold">trustNshare</div>
           </div>
 
           <div className="pt-2">
-            <CardTitle className="text-2xl font-bold">Welcome to SecureShare</CardTitle>
+            <CardTitle className="text-2xl font-bold">Welcome to trustNshare</CardTitle>
             <CardTitle className="text-xl font-semibold mt-2">Admin Registration</CardTitle>
             <CardDescription className="text-base mt-2">
               Register as an admin. Please verify your identity with supporting documents.
@@ -269,7 +269,7 @@ const AdminSignup: React.FC = () => {
             </Button>
 
             <p className="mt-6 text-center text-sm text-gray-400">
-              SecureShare helps teams and individuals store, share, and control access to important documents with end-to-end security and audit trails.
+              trustNshare helps teams and individuals store, share, and control access to important documents with end-to-end security and audit trails.
             </p>
           </form>
         </CardContent>

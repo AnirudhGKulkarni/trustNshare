@@ -372,7 +372,7 @@ const FrontPage: React.FC = () => {
                       >
                         <img
                           src={screenImageSrc}
-                          alt="TrustNShare product screenshot"
+                          alt="trustNshare product screenshot"
                           className="w-full h-full object-cover"
                           loading="lazy"
                         />
@@ -387,7 +387,7 @@ const FrontPage: React.FC = () => {
                       >
                         <img
                           src={screenImageSrc}
-                          alt="TrustNShare product screenshot"
+                          alt="trustNshare product screenshot"
                           className="w-full h-full object-cover"
                           loading="lazy"
                         />
@@ -450,7 +450,7 @@ const FrontPage: React.FC = () => {
           <div className="text-center mb-16 animate-fade-in">
             <h2 className={`text-4xl font-bold mb-4 ${isDarkMode ? "text-white" : "text-gray-900"}`}>Trusted by Industry Leaders</h2>
             <p className={`text-lg ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}>
-              See what our customers have to say about TrustNShare
+              See what our customers have to say about trustNshare
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
@@ -486,7 +486,7 @@ const FrontPage: React.FC = () => {
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center group-hover:scale-110 transition-transform">
                 <Shield className="w-5 h-5" />
               </div>
-              <span className="text-xl font-bold group-hover:text-blue-400 transition-colors">TrustNShare</span>
+              <span className="text-xl font-bold group-hover:text-blue-400 transition-colors">trustNshare</span>
             </div>
             <p className="text-gray-400 text-sm leading-relaxed">Enterprise-grade file sharing with military-grade encryption and complete compliance.</p>
             <div className="mt-4">
@@ -577,7 +577,7 @@ const FrontPage: React.FC = () => {
                 Back to top
               </button>
               <p className="flex items-center gap-2">
-                <span className="text-blue-400">©</span> 2025 TrustNShare. All rights reserved.
+                <span className="text-blue-400">©</span> 2025 trustNshare. All rights reserved.
               </p>
             </div>
           </div>

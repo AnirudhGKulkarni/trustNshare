@@ -380,7 +380,7 @@ const AdminApproval = () => {
                           disabled={processing}
                         >
                           <CheckCircle className="h-4 w-4 mr-2" />
-                          Resend Invite
+                          Send Invite
                         </Button>
                       ) : null}
                     </div>

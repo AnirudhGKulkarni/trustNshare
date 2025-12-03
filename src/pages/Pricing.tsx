@@ -292,7 +292,7 @@ const Pricing: React.FC = () => {
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center group-hover:scale-110 transition-transform">
                 <Shield className="w-5 h-5" />
               </div>
-              <span className="text-xl font-bold group-hover:text-blue-400 transition-colors">TrustNShare</span>
+              <span className="text-xl font-bold group-hover:text-blue-400 transition-colors">trustNshare</span>
             </div>
             <p className="text-gray-400 text-sm leading-relaxed">Enterprise-grade file sharing with military-grade encryption and complete compliance.</p>
             <div className="mt-4">
@@ -383,7 +383,7 @@ const Pricing: React.FC = () => {
                 Back to top
               </button>
               <p className="flex items-center gap-2">
-                <span className="text-blue-400">©</span> 2025 TrustNShare. All rights reserved.
+                <span className="text-blue-400">©</span> 2025 trustNshare. All rights reserved.
               </p>
             </div>
           </div>

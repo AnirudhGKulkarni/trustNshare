@@ -64,12 +64,12 @@ const FrontNavbar: React.FC<FrontNavbarProps> = ({ isDarkMode = false, onThemeTo
             <div className={`p-2 rounded-lg transition-all duration-300 ${
               isDarkMode ? "bg-blue-600/20 hover:bg-blue-600/30" : "bg-blue-50 hover:bg-blue-100"
             }`}>
-              <img src="/favicon.ico" alt="TrustNShare" className="w-6 h-6" />
+              <img src="/favicon.ico" alt="trustNshare" className="w-6 h-6" />
             </div>
             <Link to="/" className={`text-xl font-bold transition-colors duration-300 ${
               isDarkMode ? "text-white hover:text-blue-400" : "text-gray-900 hover:text-blue-600"
             }`}>
-              TrustNShare
+              trustNshare
             </Link>
           </div>
 

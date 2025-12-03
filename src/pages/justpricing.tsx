@@ -137,7 +137,7 @@ const JustPricing: React.FC = () => {
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center group-hover:scale-110 transition-transform">
                 <Shield className="w-5 h-5" />
               </div>
-              <span className="text-xl font-bold group-hover:text-blue-400 transition-colors">SecureShare</span>
+              <span className="text-xl font-bold group-hover:text-blue-400 transition-colors">trustNshare</span>
             </div>
             <p className="text-gray-400 text-sm leading-relaxed">Enterprise-grade file sharing with military-grade encryption and complete compliance.</p>
             <div className="mt-4">
@@ -155,7 +155,7 @@ const JustPricing: React.FC = () => {
           <div className="flex flex-col gap-4">
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-white font-semibold">Contact support</div>
-              <div className="text-gray-400">superadmin@secureshare.com</div>
+              <div className="text-gray-400">superadmin@trustnshare.com</div>
               <div className="text-gray-400">91+1234567890</div>
             </div>
             {/* Removed duplicate middle Send Feedback button */}
@@ -228,7 +228,7 @@ const JustPricing: React.FC = () => {
                 Back to top
               </button>
               <p className="flex items-center gap-2">
-                <span className="text-blue-400">©</span> 2025 SecureShare. All rights reserved.
+                <span className="text-blue-400">©</span> 2025 trustNshare. All rights reserved.
               </p>
             </div>
           </div>

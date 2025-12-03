@@ -68,7 +68,7 @@ const Signup: React.FC = () => {
             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-accent-foreground shadow-lg">
               <Shield className="h-8 w-8 text-white" />
             </div>
-            <div className="text-lg font-semibold">SecureShare</div>
+            <div className="text-lg font-semibold">trustNshare</div>
           </div>
 
           <div className="pt-2">
@@ -77,7 +77,7 @@ const Signup: React.FC = () => {
               <div className="px-4 py-1 text-sm rounded-full bg-background font-semibold">Signup</div>
             </div>
 
-            <CardTitle className="text-2xl font-bold mt-4">Welcome to SecureShare</CardTitle>
+            <CardTitle className="text-2xl font-bold mt-4">Welcome to trustNshare</CardTitle>
             <CardDescription className="text-base mt-2">
               Securely create and share files and documents with end-to-end controls.
             </CardDescription>
@@ -244,7 +244,7 @@ const Signup: React.FC = () => {
             </div>
 
             <p className="mt-6 text-center text-sm text-muted-foreground">
-              SecureShare helps teams and individuals store, share, and control access to important documents with end-to-end security and audit trails.
+              trustNshare helps teams and individuals store, share, and control access to important documents with end-to-end security and audit trails.
             </p>
           </form>
         </CardContent>

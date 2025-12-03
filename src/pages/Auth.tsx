@@ -364,7 +364,7 @@ const Auth: React.FC = () => {
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-purple-600 shadow-sm">
                   <Shield className="h-6 w-6 text-white" />
                 </div>
-                <div className="text-lg font-semibold">SecureShare</div>
+                <div className="text-lg font-semibold">trustNshare</div>
               </div>
 
               <div className="pt-2">
@@ -389,10 +389,10 @@ const Auth: React.FC = () => {
                   </button>
                 </div>
 
-                <CardTitle className="text-2xl font-bold mt-4">{mode === 'signin' ? (showWelcomeBack ? 'Welcome back to SecureShare' : 'Welcome to SecureShare') : 'Welcome to SecureShare'}</CardTitle>
+                <CardTitle className="text-2xl font-bold mt-4">{mode === 'signin' ? (showWelcomeBack ? 'Welcome back to trustNshare' : 'Welcome to trustNshare') : 'Welcome to trustNshare'}</CardTitle>
                 <CardDescription className="text-base mt-2">
                   {mode === 'signin'
-                    ? (showWelcomeBack ? 'Welcome back — please sign in to your SecureShare account' : 'Sign in or create an account to get started')
+                    ? (showWelcomeBack ? 'Welcome back — please sign in to your trustNshare account' : 'Sign in or create an account to get started')
                     : 'Securely create an account to store and share files with end-to-end controls.'}
                 </CardDescription>
               </div>
@@ -584,7 +584,7 @@ const Auth: React.FC = () => {
                   </div>
 
                   <div className="mt-6 text-center text-sm text-muted-foreground">
-                    SecureShare helps teams and individuals store, share, and control access to important documents with end-to-end security and audit trails.
+                    trustNshare helps teams and individuals store, share, and control access to important documents with end-to-end security and audit trails.
                   </div>
                 </form>
               )}

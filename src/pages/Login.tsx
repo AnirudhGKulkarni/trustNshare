@@ -109,9 +109,9 @@ const Login: React.FC = () => {
             <Shield className="h-8 w-8 text-white" />
           </div>
           <div>
-            <CardTitle className="text-2xl font-bold">{fromSignup ? "Welcome back to SecureShare" : "Welcome to SecureShare"}</CardTitle>
+            <CardTitle className="text-2xl font-bold">{fromSignup ? "Welcome back to trustNshare" : "Welcome to trustNshare"}</CardTitle>
             <CardDescription className="text-base mt-2">
-              {fromSignup ? "Please sign in to your SecureShare account" : "Sign in or create an account to get started"}
+              {fromSignup ? "Please sign in to your trustNshare account" : "Sign in or create an account to get started"}
             </CardDescription>
           </div>
         </CardHeader>
