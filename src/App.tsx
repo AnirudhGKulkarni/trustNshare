@@ -162,7 +162,7 @@ const App = () => (
             <Route
               path="/waiting-approval"
               element={
-                <RoleProtectedRoute requiredRole="client" allowPending>
+                <RoleProtectedRoute requiredRole="client" allowPending pendingOnly>
                   <WaitingApproval />
                 </RoleProtectedRoute>
               }

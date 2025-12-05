@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
-export const RoleProtectedRoute: React.FC<{ children: React.ReactNode; requiredRole: "admin" | "client" | "super_admin"; allowPending?: boolean }> = ({ children, requiredRole, allowPending = false }) => {
+export const RoleProtectedRoute: React.FC<{ children: React.ReactNode; requiredRole: "admin" | "client" | "super_admin"; allowPending?: boolean; pendingOnly?: boolean }> = ({ children, requiredRole, allowPending = false, pendingOnly = false }) => {
   const { currentUser, loading, profile } = useAuth();
   const [timedOut, setTimedOut] = useState(false);
 
@@ -16,8 +16,18 @@ export const RoleProtectedRoute: React.FC<{ children: React.ReactNode; requiredR
   if (loading) return null;
   if (!currentUser) return <Navigate to="/login" replace />;
 
+  const status = profile?.status || "active";
+
+  // If this route is pending-only, block non-pending users
+  if (pendingOnly && status !== "pending") {
+    // Redirect non-pending users to their dashboard
+    if (profile?.role === "super_admin") return <Navigate to="/super-admin" replace />;
+    if (profile?.role === "admin") return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/client" replace />;
+  }
+
   // Pending users should only access routes explicitly allowed (e.g., WaitingApproval)
-  if (profile?.status === "pending" && !allowPending) {
+  if (status === "pending" && !allowPending && !pendingOnly) {
     return <Navigate to="/waiting-approval" replace />;
   }
 
