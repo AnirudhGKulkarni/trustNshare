@@ -159,87 +159,94 @@ const App = () => (
             <Route path="/signup" element={<Signup />} />
             <Route path="/admin-signup" element={<AdminSignup />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/waiting-approval" element={<WaitingApproval />} />
+            <Route
+              path="/waiting-approval"
+              element={
+                <RoleProtectedRoute requiredRole="client" allowPending>
+                  <WaitingApproval />
+                </RoleProtectedRoute>
+              }
+            />
 
             {/* Admin routes */}
             <Route
               path="/dashboard"
               element={
-                <ProtectedRoute>
+                <RoleProtectedRoute requiredRole="admin">
                   <Dashboard />
-                </ProtectedRoute>
+                </RoleProtectedRoute>
               }
             />
             <Route
               path="/users"
               element={
-                <ProtectedRoute>
+                <RoleProtectedRoute requiredRole="admin">
                   <Users />
-                </ProtectedRoute>
+                </RoleProtectedRoute>
               }
             />
             <Route
               path="/policies"
               element={
-                <ProtectedRoute>
+                <RoleProtectedRoute requiredRole="admin">
                   <Policies />
-                </ProtectedRoute>
+                </RoleProtectedRoute>
               }
             />
             <Route
               path="/share"
               element={
-                <ProtectedRoute>
+                <RoleProtectedRoute requiredRole="admin">
                   <Share />
-                </ProtectedRoute>
+                </RoleProtectedRoute>
               }
             />
             <Route
               path="/audit"
               element={
-                <ProtectedRoute>
+                <RoleProtectedRoute requiredRole="admin">
                   <Audit />
-                </ProtectedRoute>
+                </RoleProtectedRoute>
               }
             />
             <Route
               path="/settings"
               element={
-                <ProtectedRoute>
+                <RoleProtectedRoute requiredRole="admin">
                   <Settings />
-                </ProtectedRoute>
+                </RoleProtectedRoute>
               }
             />
             <Route
               path="/chat"
               element={
-                <ProtectedRoute>
+                <RoleProtectedRoute requiredRole="admin">
                   <Chat />
-                </ProtectedRoute>
+                </RoleProtectedRoute>
               }
             />
             <Route
               path="/login-history"
               element={
-                <ProtectedRoute>
+                <RoleProtectedRoute requiredRole="admin">
                   <LoginHistory />
-                </ProtectedRoute>
+                </RoleProtectedRoute>
               }
             />
             <Route
               path="/alert-center"
               element={
-                <ProtectedRoute>
+                <RoleProtectedRoute requiredRole="admin">
                   <AlertCenter />
-                </ProtectedRoute>
+                </RoleProtectedRoute>
               }
             />
             <Route
               path="/security-settings"
               element={
-                <ProtectedRoute>
+                <RoleProtectedRoute requiredRole="admin">
                   <SecuritySettings />
-                </ProtectedRoute>
+                </RoleProtectedRoute>
               }
             />
 

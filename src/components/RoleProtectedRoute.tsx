@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
-export const RoleProtectedRoute: React.FC<{ children: React.ReactNode; requiredRole: "admin" | "client" | "super_admin" }> = ({ children, requiredRole }) => {
+export const RoleProtectedRoute: React.FC<{ children: React.ReactNode; requiredRole: "admin" | "client" | "super_admin"; allowPending?: boolean }> = ({ children, requiredRole, allowPending = false }) => {
   const { currentUser, loading, profile } = useAuth();
   const [timedOut, setTimedOut] = useState(false);
 
@@ -16,20 +16,21 @@ export const RoleProtectedRoute: React.FC<{ children: React.ReactNode; requiredR
   if (loading) return null;
   if (!currentUser) return <Navigate to="/login" replace />;
 
+  // Pending users should only access routes explicitly allowed (e.g., WaitingApproval)
+  if (profile?.status === "pending" && !allowPending) {
+    return <Navigate to="/waiting-approval" replace />;
+  }
+
   // If there's no profile yet, allow client routes to render (most users are clients by default)
   // but keep stricter handling for admin and super_admin routes.
   if (!profile) {
-    if (requiredRole === "client") {
-      return <>{children}</>;
-    }
-
-    // For admin/super_admin-required routes, wait up to the timeout for a profile; otherwise redirect to dashboard.
+    // Without a loaded profile, do not allow privileged routes; wait briefly then route to a safe default.
     if (!timedOut) return null;
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/client-dashboard" replace />;
   }
 
   if (profile.role !== requiredRole) {
-    // If the user's role doesn't match, redirect them to their dashboard instead of forcing admin.
+    // Redirect to user's own dashboard when accessing another role's route.
     if (profile.role === "super_admin") return <Navigate to="/super-admin" replace />;
     if (profile.role === "admin") return <Navigate to="/dashboard" replace />;
     return <Navigate to="/client" replace />;

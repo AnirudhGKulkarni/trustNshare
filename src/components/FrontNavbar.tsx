@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ChevronDown, Menu, X } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface FrontNavbarProps {
   isDarkMode?: boolean;
@@ -10,6 +11,21 @@ interface FrontNavbarProps {
 const FrontNavbar: React.FC<FrontNavbarProps> = ({ isDarkMode = false, onThemeToggle }) => {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { currentUser, profile } = useAuth();
+
+  const dashboardRoute = useMemo(() => {
+    // If not logged in, no dashboard
+    if (!currentUser) return null;
+
+    // If status pending -> waiting approval
+    if (profile?.status === "pending") return "/waiting-approval";
+
+    // Route by role
+    const role = profile?.role || "client";
+    if (role === "super_admin") return "/super-admin";
+    if (role === "admin") return "/dashboard";
+    return "/client";
+  }, [currentUser, profile]);
 
   const toggleDropdown = (menu: string) => {
     setOpenDropdown(openDropdown === menu ? null : menu);
@@ -59,6 +75,10 @@ const FrontNavbar: React.FC<FrontNavbarProps> = ({ isDarkMode = false, onThemeTo
     }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
+          {/* Auth context */}
+          {/** Using auth here to compute dashboard route **/}
+          {/** Move hook usage to top-level of component render **/}
+          
           {/* Logo with smooth entrance */}
           <div className="flex items-center gap-3 flex-shrink-0 animate-fade-in">
             <div className={`p-2 rounded-lg transition-all duration-300 ${
@@ -156,6 +176,14 @@ const FrontNavbar: React.FC<FrontNavbarProps> = ({ isDarkMode = false, onThemeTo
 
             {/* Desktop Auth Buttons */}
             <div className="hidden md:flex gap-2 sm:gap-3">
+              {dashboardRoute && (
+                <Link
+                  to={dashboardRoute}
+                  className="rounded-lg px-4 py-2 text-sm font-medium bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105 active:scale-95 hover:from-emerald-700 hover:to-emerald-800"
+                >
+                  Dashboard
+                </Link>
+              )}
               <Link
                 to="/login"
                 className={`rounded-lg px-4 py-2 text-sm font-medium transition-all duration-300 transform hover:scale-105 active:scale-95 ${
@@ -269,6 +297,15 @@ const FrontNavbar: React.FC<FrontNavbarProps> = ({ isDarkMode = false, onThemeTo
             <div className={`px-4 py-4 border-t gap-2 flex flex-col ${
               isDarkMode ? "border-gray-800" : "border-gray-200"
             }`}>
+              {dashboardRoute && (
+                <Link
+                  to={dashboardRoute}
+                  className="text-center rounded-lg px-4 py-2 text-sm font-medium bg-gradient-to-r from-emerald-600 to-emerald-700 text-white hover:from-emerald-700 hover:to-emerald-800 transition-all duration-300"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Dashboard
+                </Link>
+              )}
               <Link
                 to="/login"
                 className={`text-center rounded-lg px-4 py-2 text-sm font-medium transition-all duration-300 ${
