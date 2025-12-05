@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { getDoc, doc } from "firebase/firestore";
+import { getDoc, doc, getDocs, query, where, collection } from "firebase/firestore";
 import { firestore } from "@/lib/firebase";
 import { getIdTokenResult } from "firebase/auth";
 import { auth } from "@/lib/firebase";
@@ -56,8 +56,15 @@ const Login: React.FC = () => {
         }
 
         if (profile && profile.role === "admin") {
+          // If approved admin has not paid, send to pricing first
+          const isActive = profile.status === "active";
+          const isPaid = !!profile.paid;
           toast.success("Welcome Admin!");
-          navigate("/dashboard");
+          if (isActive && !isPaid) {
+            navigate("/pricing");
+          } else {
+            navigate("/dashboard");
+          }
           return;
         }
 
@@ -67,7 +74,15 @@ const Login: React.FC = () => {
           return;
         }
 
-        // If profile missing or ambiguous, fall back to token claims
+        // If profile missing: block access and sign out
+        if (!profile) {
+          toast.error("User not registered. Please contact support.");
+          try { await auth.signOut(); } catch {}
+          navigate("/");
+          return;
+        }
+
+        // If profile ambiguous, fall back to token claims
         console.log("Profile not found or role unclear, checking token claims...");
         try {
           const id = await getIdTokenResult(auth.currentUser!, true); // Force refresh
@@ -80,7 +95,24 @@ const Login: React.FC = () => {
             navigate("/super-admin");
           } else if ((id.claims as any)?.admin) {
             toast.success("Welcome Admin!");
-            navigate("/dashboard");
+            // Fallback: attempt to read paid flag via UID mapping
+            try {
+              const usersQ = await getDocs(query(collection(firestore, "users"), where("uid", "==", auth.currentUser!.uid)));
+              if (!usersQ.empty) {
+                const u = usersQ.docs[0].data() as any;
+                const isActive = u?.status === "active";
+                const isPaid = !!u?.paid;
+                if (isActive && !isPaid) {
+                  navigate("/pricing");
+                } else {
+                  navigate("/dashboard");
+                }
+              } else {
+                navigate("/dashboard");
+              }
+            } catch {
+              navigate("/dashboard");
+            }
           } else {
             toast.success("Login successful!");
             navigate("/client");
@@ -97,7 +129,26 @@ const Login: React.FC = () => {
         try {
           const id = await getIdTokenResult(user);
           if ((id.claims as any)?.super_admin) navigate("/super-admin");
-          else if ((id.claims as any)?.admin) navigate("/dashboard");
+          else if ((id.claims as any)?.admin) {
+            // On error path, still try pricing redirect
+            try {
+              const usersQ = await getDocs(query(collection(firestore, "users"), where("uid", "==", user.uid)));
+              if (!usersQ.empty) {
+                const u = usersQ.docs[0].data() as any;
+                const isActive = u?.status === "active";
+                const isPaid = !!u?.paid;
+                if (isActive && !isPaid) {
+                  navigate("/pricing");
+                } else {
+                  navigate("/dashboard");
+                }
+              } else {
+                navigate("/dashboard");
+              }
+            } catch {
+              navigate("/dashboard");
+            }
+          }
           else navigate("/client");
         } catch (err2) {
           console.warn("Could not read token claims after profile read failure:", err2);
@@ -116,7 +167,7 @@ const Login: React.FC = () => {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-secondary to-accent p-6">
       <Card className="w-full max-w-md shadow-elevated">
-          <CardHeader className="space-y-4 text-center">
+        <CardHeader className="space-y-4 text-center">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-accent-foreground shadow-lg">
             <Shield className="h-8 w-8 text-white" />
           </div>
@@ -127,56 +178,15 @@ const Login: React.FC = () => {
             </CardDescription>
           </div>
         </CardHeader>
-
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input id="email" type="email" placeholder="name@company.com" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10" required />
-              </div>
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-muted-foreground">
+              Welcome back! Enter your credentials to continue.
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10 pr-10"
-                  required
-                />
-                <button
-                  type="button"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                  onClick={() => setShowPassword((s) => !s)}
-                  className="absolute right-3 top-3 flex items-center text-muted-foreground"
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-muted-foreground">
-                <Link to="/forgot-password" className="underline hover:text-primary">Forgot password?</Link>
-              </div>
-              <div className="text-sm">
-                <Link to="/signup" className="underline hover:text-primary">Create an account</Link>
-              </div>
-            </div>
-
-            <Button type="submit" className="w-full bg-gradient-to-r from-primary to-accent-foreground hover:opacity-90 transition-opacity shadow-md" disabled={isLoading}>
-              {isLoading ? "Signing in..." : "Sign In"}
-            </Button>
-          </form>
-
-          <p className="mt-6 text-center text-sm text-muted-foreground">Demo: Use any email and password to login (if dev mode)</p>
+          </div>
+          <p className="mt-6 text-center text-sm text-muted-foreground">
+            Demo: Use any email and password to login (if dev mode)
+          </p>
         </CardContent>
       </Card>
     </div>

@@ -49,8 +49,10 @@ const Pricing: React.FC = () => {
   const [fbEmail, setFbEmail] = useState("");
   const [fbMessage, setFbMessage] = useState("");
 
-  // Access gate: only open via shared link from Super Admin
+  // Access gate: allowed if invite token is valid OR current admin is approved but not paid
   const [allowed, setAllowed] = useState<boolean | null>(null);
+  const [userPaid, setUserPaid] = useState<boolean>(false);
+  const [userId, setUserId] = useState<string | null>(null);
   const inviteId = useMemo(() => {
     try {
       const params = new URLSearchParams(window.location.search);
@@ -62,40 +64,86 @@ const Pricing: React.FC = () => {
 
   useEffect(() => {
     const verifyAccess = async () => {
-      // Require an invite token in the URL
-      if (!inviteId) {
-        setAllowed(false);
-        return;
-      }
       try {
-        // pricing_invites/{inviteId} created by Super Admin dashboard when sharing
-        const ref = doc(firestore, "pricing_invites", inviteId);
-        const snap = await getDoc(ref);
-        if (!snap.exists()) {
+        // If invite is present, validate it as before
+        if (inviteId) {
+          const ref = doc(firestore, "pricing_invites", inviteId);
+          const snap = await getDoc(ref);
+          if (!snap.exists()) {
+            // Fall through to user-based rule
+          } else {
+            const data = snap.data() as any;
+            const expiresAt = data?.expiresAt?.toMillis?.() ? new Date(data.expiresAt.toMillis()) : null;
+            if (expiresAt && Date.now() > expiresAt.getTime()) {
+              // fall through
+            } else if (!!data?.revoked) {
+              // fall through
+            } else {
+              setAllowed(true);
+              return;
+            }
+          }
+        }
+
+        // No valid invite: allow current approved admin who hasn't paid yet
+        // We need the user record to determine paid status
+        // Avoid crashing when auth context isn't available; lazy import to keep page self-contained
+        const { auth, firestore: fs } = await import("@/lib/firebase");
+        const current = auth.currentUser;
+        if (!current) {
           setAllowed(false);
           return;
         }
-        const data = snap.data() as any;
-        // Optional expiration check
-        const expiresAt = data?.expiresAt?.toMillis?.() ? new Date(data.expiresAt.toMillis()) : null;
-        if (expiresAt && Date.now() > expiresAt.getTime()) {
+        setUserId(current.uid);
+        const usersQ = await (await import("firebase/firestore")).getDocs(
+          (await import("firebase/firestore")).query(
+            (await import("firebase/firestore")).collection(fs, "users"),
+            (await import("firebase/firestore")).where("uid", "==", current.uid)
+          )
+        );
+        if (usersQ.empty) {
           setAllowed(false);
           return;
         }
-        // Optional: one-time use check
-        const revoked = !!data?.revoked;
-        if (revoked) {
+        const docSnap = usersQ.docs[0];
+        const u = docSnap.data() as any;
+        const isAdmin = u?.role === "admin" && u?.status === "active";
+        const paid = !!u?.paid;
+        setUserPaid(paid);
+        if (isAdmin && !paid) {
+          setAllowed(true);
+        } else {
           setAllowed(false);
-          return;
         }
-        setAllowed(true);
       } catch (e) {
-        console.warn("Invite verification failed", e);
+        console.warn("Access verification failed", e);
         setAllowed(false);
       }
     };
     verifyAccess();
   }, [inviteId]);
+
+  // Simulate payment completion: mark user as paid and redirect to dashboard
+  const handleCompletePayment = async () => {
+    try {
+      const { firestore: fs } = await import("@/lib/firebase");
+      const { getDocs, query, collection, where, updateDoc } = await import("firebase/firestore");
+      if (!userId) return;
+      const usersQ = await getDocs(query(collection(fs, "users"), where("uid", "==", userId)));
+      if (!usersQ.empty) {
+        await updateDoc(usersQ.docs[0].ref, { paid: true, paidAt: (await import("firebase/firestore")).serverTimestamp() });
+      }
+      // If this page opened via invite, mark it used
+      if (inviteId) {
+        const { doc: d, updateDoc: upd } = await import("firebase/firestore");
+        await upd(d(fs, "pricing_invites", inviteId), { used: true });
+      }
+      // Navigate to admin dashboard
+      window.location.href = "/dashboard";
+    } catch (e) {
+      console.warn("Failed to complete payment flow", e);
+    }
+  };
 
   if (allowed === null) {
     return (
@@ -269,12 +317,25 @@ const Pricing: React.FC = () => {
               <div
                 key={idx}
                 className={`p-6 rounded-2xl shadow-md hover:shadow-lg transition-all duration-300 border group hover:-translate-y-1 animate-fade-in ${isDarkMode ? "bg-gray-800 border-gray-700 hover:border-blue-500" : "bg-white border-gray-200 hover:border-blue-400"}`}
-                style={{animationDelay: `${idx * 0.05}s`}}
+                style={{animationDelay: `${idx * 0.1}s`}}
               >
                 <h3 className={`text-lg font-bold mb-3 group-hover:text-blue-600 transition-colors ${isDarkMode ? "text-white" : "text-gray-900"}`}>
                   {faq.question}
                 </h3>
                 <p className={isDarkMode ? "text-gray-300 leading-relaxed" : "text-gray-700 leading-relaxed"}>{faq.answer}</p>
+
+          {/* Payment CTA for gated admins */}
+          {allowed && !userPaid && (
+            <div className="mt-8 flex items-center justify-center">
+              <button
+                type="button"
+                onClick={handleCompletePayment}
+                className="rounded-full px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold shadow hover:opacity-90 transition"
+              >
+                Proceed to Payment and Activate Admin
+              </button>
+            </div>
+          )}
               </div>
             ))}
           </div>

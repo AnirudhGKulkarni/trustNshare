@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { CheckCircle, XCircle, Eye, FileText, Download, User, Mail, Briefcase, Calendar } from 'lucide-react';
-import { collection, query, where, getDocs, doc, updateDoc, addDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, updateDoc, addDoc, serverTimestamp, Timestamp, deleteDoc } from 'firebase/firestore';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { firestore, auth } from '@/lib/firebase';
 import { toast } from 'sonner';
@@ -39,7 +39,7 @@ const AdminApproval = () => {
   const [selectedRequest, setSelectedRequest] = useState<AdminRequest | null>(null);
   const [viewingDocument, setViewingDocument] = useState<DocumentMeta | null>(null);
   const [processing, setProcessing] = useState(false);
-  const [latestInviteLink, setLatestInviteLink] = useState<string | null>(null);
+  // Pricing invites/email removed; pricing page will be shown on login for approved-but-unpaid admins
 
   useEffect(() => {
     fetchRequests();
@@ -87,52 +87,9 @@ const AdminApproval = () => {
     }
   };
 
-  // Fetch latest invite link for the selected request when opened
-  useEffect(() => {
-    const fetchLatestInvite = async () => {
-      if (!selectedRequest) {
-        setLatestInviteLink(null);
-        return;
-      }
-      try {
-        const invitesQ = query(
-          collection(firestore, 'pricing_invites'),
-          where('requestId', '==', selectedRequest.id),
-          where('revoked', '==', false)
-        );
-        const snap = await getDocs(invitesQ);
-        if (!snap.empty) {
-          const inviteDoc = snap.docs[0];
-          const inviteLink = `${window.location.origin}/pricing?invite=${inviteDoc.id}`;
-          setLatestInviteLink(inviteLink);
-        } else {
-          setLatestInviteLink(null);
-        }
-      } catch (e) {
-        console.warn('Fetch latest invite error:', e);
-        setLatestInviteLink(null);
-      }
-    };
-    fetchLatestInvite();
-  }, [selectedRequest]);
+  // No invite lookup needed
 
-  // Create a secure Pricing invite token for this admin
-  const createPricingInvite = async (request: AdminRequest) => {
-    // 7 days expiry by default
-    const expiresAt = Timestamp.fromDate(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000));
-    const inviteDoc = await addDoc(collection(firestore, 'pricing_invites'), {
-      email: request.email,
-      adminName: `${request.firstName} ${request.lastName}`,
-      createdAt: serverTimestamp(),
-      createdBy: 'super_admin',
-      expiresAt,
-      revoked: false,
-      used: false,
-      requestId: request.id,
-    });
-    const inviteLink = `${window.location.origin}/pricing?invite=${inviteDoc.id}`;
-    return { id: inviteDoc.id, link: inviteLink };
-  };
+  // Invite/email disabled
 
   const handleApprove = async (request: AdminRequest) => {
     if (!confirm(`Approve admin and send Pricing invite to ${request.firstName} ${request.lastName}?`)) {
@@ -141,42 +98,79 @@ const AdminApproval = () => {
 
     setProcessing(true);
     try {
-      // Generate temporary password
-      const tempPassword = `Admin@${Math.random().toString(36).slice(-8)}`;
+      // Generate temporary password (used only if creating a new auth user)
+      let tempPassword: string | undefined = `Admin@${Math.random().toString(36).slice(-8)}`;
 
-      // Create user in Firebase Auth
-      const userCredential = await createUserWithEmailAndPassword(auth, request.email, tempPassword);
-      
-      // Add to users collection with admin role
-      await addDoc(collection(firestore, 'users'), {
-        uid: userCredential.user.uid,
-        email: request.email,
-        firstName: request.firstName,
-        lastName: request.lastName,
-        company: request.company,
-        domain: request.domain,
-        customCategory: request.customCategory,
-        role: 'admin',
-        status: 'active',
-        tempPassword: tempPassword,
-        createdAt: serverTimestamp(),
-        approvedAt: serverTimestamp(),
-      });
+      // Check if a user doc already exists for this email
+      const existingUsersQ = query(collection(firestore, 'users'), where('email', '==', request.email));
+      const existingUsersSnap = await getDocs(existingUsersQ);
 
-      // Also update existing user doc if it exists (for users who signed up first)
+      let uid: string | undefined = undefined;
+      if (existingUsersSnap.empty) {
+        // No user doc found — try creating an Auth user
+        try {
+          const userCredential = await createUserWithEmailAndPassword(auth, request.email, tempPassword!);
+          uid = userCredential.user.uid;
+          // Create user profile with doc id = uid (so login lookup works)
+          const { doc: fDoc, setDoc } = await import('firebase/firestore');
+          await setDoc(fDoc(firestore, 'users', uid), {
+            uid,
+            email: request.email,
+            firstName: request.firstName,
+            lastName: request.lastName,
+            company: request.company,
+            domain: request.domain,
+            customCategory: request.customCategory,
+            role: 'admin',
+            status: 'active',
+            tempPassword,
+            paid: false,
+            createdAt: serverTimestamp(),
+            approvedAt: serverTimestamp(),
+          });
+        } catch (createErr: any) {
+          // If the email already exists in Auth, continue by upgrading Firestore profile
+          if (createErr?.code === 'auth/email-already-in-use') {
+            console.warn('Auth user already exists for email, promoting to admin without creating:', request.email);
+            tempPassword = undefined; // don't send temp password for existing accounts
+          } else {
+            throw createErr;
+          }
+        }
+      }
+
+      // Ensure Firestore profile is updated/promoted to admin
       try {
         const userQuery = query(collection(firestore, 'users'), where('email', '==', request.email));
         const userSnap = await getDocs(userQuery);
         if (!userSnap.empty) {
+          uid = uid ?? (userSnap.docs[0].data() as any)?.uid;
           const userDocRef = userSnap.docs[0].ref;
           await updateDoc(userDocRef, {
             status: 'active',
             role: 'admin',
             approvedAt: serverTimestamp(),
           });
+        } else if (uid) {
+          // If we have an Auth user but no profile (rare), create the profile at uid doc id
+          const { doc: fDoc, setDoc } = await import('firebase/firestore');
+          await setDoc(fDoc(firestore, 'users', uid), {
+            uid,
+            email: request.email,
+            firstName: request.firstName,
+            lastName: request.lastName,
+            company: request.company,
+            domain: request.domain,
+            customCategory: request.customCategory,
+            role: 'admin',
+            status: 'active',
+            paid: false,
+            createdAt: serverTimestamp(),
+            approvedAt: serverTimestamp(),
+          });
         }
       } catch (err) {
-        console.warn('Could not update existing user status:', err);
+        console.warn('Could not update/create user profile status:', err);
       }
 
       // Update approval document status
@@ -185,33 +179,17 @@ const AdminApproval = () => {
         approvedAt: serverTimestamp(),
         approvedBy: 'super_admin',
       });
-
-      // Create invite for secure Pricing page and send via email
-      const invite = await createPricingInvite(request);
-
-      // Send email via configured serverless endpoint if available
-      const emailEndpoint = import.meta.env.VITE_EMAIL_FUNCTION_URL as string | undefined;
-      if (emailEndpoint) {
-        try {
-          const res = await fetch(emailEndpoint, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              to: request.email,
-              name: `${request.firstName} ${request.lastName}`,
-              tempPassword,
-              inviteLink: invite.link,
-            }),
+      // Mark user unpaid so Pricing page appears on next login
+      try {
+        const userQuery = query(collection(firestore, 'users'), where('email', '==', request.email));
+        const userSnap = await getDocs(userQuery);
+        if (!userSnap.empty) {
+          await updateDoc(userSnap.docs[0].ref, {
+            paid: false,
           });
-          if (!res.ok) throw new Error(`Email send failed (${res.status})`);
-          toast.success('Invite email sent');
-        } catch (e: any) {
-          console.error('Email send error:', e);
-          toast.warning('Approved, but email sending failed. Please resend manually.');
         }
-      } else {
-        console.log(`Email to ${request.email}: temp password: ${tempPassword}, invite link: ${invite.link}`);
-        toast.message('Email endpoint not configured. Logged payload to console.');
+      } catch (e) {
+        console.warn('Could not set paid=false after approval:', e);
       }
 
       fetchRequests();
@@ -243,6 +221,60 @@ const AdminApproval = () => {
     } catch (error) {
       console.error('Error rejecting admin:', error);
       toast.error('Failed to reject admin request');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  // Delete user from Firestore and remove approval document. Optionally delete Auth via admin endpoint.
+  const handleDeleteUser = async (request: AdminRequest) => {
+    if (!confirm(`Delete user ${request.email} and remove their approval request?`)) {
+      return;
+    }
+    setProcessing(true);
+    try {
+      // Delete matching user documents by email
+      try {
+        const usersQ = query(collection(firestore, 'users'), where('email', '==', request.email));
+        const usersSnap = await getDocs(usersQ);
+        for (const userDoc of usersSnap.docs) {
+          await deleteDoc(userDoc.ref);
+        }
+      } catch (e) {
+        console.warn('User deletion (users collection) warning:', e);
+      }
+
+      // Delete approval document
+      try {
+        await deleteDoc(doc(firestore, 'approval_documents', request.id));
+      } catch (e) {
+        console.warn('Approval document deletion warning:', e);
+      }
+
+      // Optional: request backend to delete Firebase Auth user (requires Admin SDK)
+      try {
+        const deleteEndpoint = import.meta.env.VITE_ADMIN_DELETE_USER_URL as string | undefined;
+        if (deleteEndpoint) {
+          const res = await fetch(deleteEndpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: request.email }),
+          });
+          if (!res.ok) {
+            console.warn('Auth deletion endpoint returned non-OK:', res.status);
+          }
+        }
+      } catch (e) {
+        console.warn('Auth user deletion call failed:', e);
+      }
+
+      toast.success('User deleted successfully');
+      // Refresh list
+      fetchRequests();
+      setSelectedRequest(null);
+    } catch (error: any) {
+      console.error('Error deleting user:', error);
+      toast.error(error?.message || 'Failed to delete user');
     } finally {
       setProcessing(false);
     }
@@ -281,55 +313,7 @@ const AdminApproval = () => {
     }
   };
 
-  // Resend invite email for an approved admin
-  const resendInvite = async (request: AdminRequest) => {
-    setProcessing(true);
-    try {
-      // Find latest active invite for this request
-      const invitesQ = query(
-        collection(firestore, 'pricing_invites'),
-        where('requestId', '==', request.id),
-        where('revoked', '==', false)
-      );
-      const snap = await getDocs(invitesQ);
-      if (snap.empty) {
-        // Create a new invite if none exists
-        const invite = await createPricingInvite(request);
-        await sendInviteEmail(request, invite.link, undefined);
-        toast.success('New invite created and email sent');
-      } else {
-        const inviteDoc = snap.docs[0];
-        const inviteLink = `${window.location.origin}/pricing?invite=${inviteDoc.id}`;
-        await sendInviteEmail(request, inviteLink, undefined);
-        toast.success('Invite email resent');
-      }
-    } catch (e: any) {
-      console.error('Resend invite error:', e);
-      toast.error(e?.message || 'Failed to resend invite');
-    } finally {
-      setProcessing(false);
-    }
-  };
-
-  const sendInviteEmail = async (request: AdminRequest, inviteLink: string, tempPassword?: string) => {
-    const emailEndpoint = import.meta.env.VITE_EMAIL_FUNCTION_URL as string | undefined;
-    if (!emailEndpoint) {
-      console.log(`Email payload -> to: ${request.email}, name: ${request.firstName} ${request.lastName}, inviteLink: ${inviteLink}, tempPassword: ${tempPassword ?? ''}`);
-      toast.message('Email endpoint not configured. Logged payload to console.');
-      return;
-    }
-    const res = await fetch(emailEndpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        to: request.email,
-        name: `${request.firstName} ${request.lastName}`,
-        tempPassword,
-        inviteLink,
-      }),
-    });
-    if (!res.ok) throw new Error(`Email send failed (${res.status})`);
-  };
+  // Resend invite/email disabled
 
   return (
     <DashboardLayout>
@@ -415,8 +399,8 @@ const AdminApproval = () => {
                         <Eye className="h-4 w-4 mr-2" />
                         View Details
                       </Button>
-                      {request.status === 'pending' ? (
-                        <>
+                      <>
+                        {request.status === 'pending' && (
                           <Button
                             variant="default"
                             size="sm"
@@ -427,6 +411,8 @@ const AdminApproval = () => {
                             <CheckCircle className="h-4 w-4 mr-2" />
                             Approve
                           </Button>
+                        )}
+                        {request.status === 'pending' && (
                           <Button
                             variant="destructive"
                             size="sm"
@@ -436,18 +422,18 @@ const AdminApproval = () => {
                             <XCircle className="h-4 w-4 mr-2" />
                             Reject
                           </Button>
-                        </>
-                      ) : request.status === 'approved' ? (
+                        )}
                         <Button
-                          variant="outline"
+                          variant="destructive"
                           size="sm"
-                          onClick={() => resendInvite(request)}
+                          onClick={() => handleDeleteUser(request)}
                           disabled={processing}
+                          className="bg-red-700 hover:bg-red-800"
                         >
-                          <CheckCircle className="h-4 w-4 mr-2" />
-                          Send Invite
+                          <XCircle className="h-4 w-4 mr-2" />
+                          Delete User
                         </Button>
-                      ) : null}
+                      </>
                     </div>
                   </div>
                 </CardContent>
@@ -507,27 +493,27 @@ const AdminApproval = () => {
                     <label className="text-sm font-medium">Submitted</label>
                     <p className="text-sm text-muted-foreground">{formatDate(selectedRequest.createdAt)}</p>
                   </div>
+                  {selectedRequest.googleDriveLink && (
+                    <div className="col-span-2">
+                      <label className="text-sm font-medium">Drive Link</label>
+                      <p className="text-sm">
+                        <a
+                          href={selectedRequest.googleDriveLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary underline"
+                        >
+                          Open verification documents
+                        </a>
+                      </p>
+                    </div>
+                  )}
                 </div>
 
-                {latestInviteLink ? (
-                  <div>
-                    <h4 className="text-sm font-medium mb-3">Invite Sent</h4>
-                    <p className="text-sm">
-                      A pricing invite has been sent to this admin.{' '}
-                      <a
-                        href={latestInviteLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary underline"
-                      >
-                        Open invite
-                      </a>
-                    </p>
-                  </div>
-                ) : null}
+                {/* Invite section removed */}
 
-                {selectedRequest.status === 'pending' && (
-                  <div className="flex gap-3 pt-4 border-t">
+                <div className="flex gap-3 pt-4 border-t">
+                  {selectedRequest.status === 'pending' && (
                     <Button
                       onClick={() => handleApprove(selectedRequest)}
                       disabled={processing}
@@ -536,14 +522,8 @@ const AdminApproval = () => {
                       <CheckCircle className="h-4 w-4 mr-2" />
                       Approve Admin
                     </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => resendInvite(selectedRequest)}
-                      disabled={processing}
-                    >
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      Send Invite
-                    </Button>
+                  )}
+                  {selectedRequest.status === 'pending' && (
                     <Button
                       variant="destructive"
                       onClick={() => handleReject(selectedRequest)}
@@ -552,8 +532,17 @@ const AdminApproval = () => {
                       <XCircle className="h-4 w-4 mr-2" />
                       Reject Request
                     </Button>
-                  </div>
-                )}
+                  )}
+                  <Button
+                    variant="destructive"
+                    onClick={() => selectedRequest && handleDeleteUser(selectedRequest)}
+                    disabled={processing}
+                    className="bg-red-700 hover:bg-red-800"
+                  >
+                    <XCircle className="h-4 w-4 mr-2" />
+                    Delete User
+                  </Button>
+                </div>
               </div>
             )}
           </DialogContent>

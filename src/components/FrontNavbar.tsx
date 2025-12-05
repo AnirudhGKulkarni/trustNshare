@@ -184,22 +184,26 @@ const FrontNavbar: React.FC<FrontNavbarProps> = ({ isDarkMode = false, onThemeTo
                   Dashboard
                 </Link>
               )}
-              <Link
-                to="/login"
-                className={`rounded-lg px-4 py-2 text-sm font-medium transition-all duration-300 transform hover:scale-105 active:scale-95 ${
-                  isDarkMode
-                    ? "text-white border border-gray-600 hover:border-blue-400 hover:text-blue-400 hover:bg-gray-800/50"
-                    : "text-gray-700 border border-gray-300 hover:border-blue-600 hover:text-blue-600 hover:bg-blue-50"
-                }`}
-              >
-                Login/Signup
-              </Link>
-              <Link
-                to="/admin-signup"
-                className="rounded-lg px-4 py-2 text-sm font-medium bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105 active:scale-95 hover:from-blue-700 hover:to-blue-800"
-              >
-                Admin Signup
-              </Link>
+              {!currentUser && (
+                <>
+                  <Link
+                    to="/login"
+                    className={`rounded-lg px-4 py-2 text-sm font-medium transition-all duration-300 transform hover:scale-105 active:scale-95 ${
+                      isDarkMode
+                        ? "text-white border border-gray-600 hover:border-blue-400 hover:text-blue-400 hover:bg-gray-800/50"
+                        : "text-gray-700 border border-gray-300 hover:border-blue-600 hover:text-blue-600 hover:bg-blue-50"
+                    }`}
+                  >
+                    Login/Signup
+                  </Link>
+                  <Link
+                    to="/admin-signup"
+                    className="rounded-lg px-4 py-2 text-sm font-medium bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105 active:scale-95 hover:from-blue-700 hover:to-blue-800"
+                  >
+                    Admin Signup
+                  </Link>
+                </>
+              )}
             </div>
 
             {/* Mobile Menu Button */}
@@ -306,22 +310,26 @@ const FrontNavbar: React.FC<FrontNavbarProps> = ({ isDarkMode = false, onThemeTo
                   Dashboard
                 </Link>
               )}
-              <Link
-                to="/login"
-                className={`text-center rounded-lg px-4 py-2 text-sm font-medium transition-all duration-300 ${
-                  isDarkMode
-                    ? "text-white border border-gray-600 hover:border-blue-400 hover:text-blue-400 hover:bg-gray-800"
-                    : "text-gray-700 border border-gray-300 hover:border-blue-600 hover:text-blue-600 hover:bg-blue-50"
-                }`}
-              >
-                Login
-              </Link>
-              <Link
-                to="/admin-signup"
-                className="text-center rounded-lg px-4 py-2 text-sm font-medium bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 transition-all duration-300"
-              >
-                Admin Signup
-              </Link>
+              {!currentUser && (
+                <>
+                  <Link
+                    to="/login"
+                    className={`text-center rounded-lg px-4 py-2 text-sm font-medium transition-all duration-300 ${
+                      isDarkMode
+                        ? "text-white border border-gray-600 hover:border-blue-400 hover:text-blue-400 hover:bg-gray-800"
+                        : "text-gray-700 border border-gray-300 hover:border-blue-600 hover:text-blue-600 hover:bg-blue-50"
+                    }`}
+                  >
+                    Login
+                  </Link>
+                  <Link
+                    to="/admin-signup"
+                    className="text-center rounded-lg px-4 py-2 text-sm font-medium bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 transition-all duration-300"
+                  >
+                    Admin Signup
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         )}
