@@ -59,50 +59,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setProfile(profileData);
         return;
       }
-      // If doc does not exist, infer role from token claims when possible.
-      // This avoids incorrectly assigning 'client' to admin users who were
-      // provisioned via server-side (Admin SDK) custom claims but don't yet
-      // have a Firestore profile document.
-      let inferredRole: "admin" | "client" | "super_admin" = "client";
-      try {
-        // Try to read token claims from the currently-signed-in user
-        // (non-blocking if unavailable).
-        if (auth.currentUser) {
-          // Force refresh token to get latest claims
-          const id = await auth.currentUser.getIdTokenResult(true);
-          console.log("AuthContext - Token claims during profile creation (forced refresh):", id.claims);
-          console.log("AuthContext - User email:", auth.currentUser.email);
-          
-          if ((id.claims as any)?.super_admin) {
-            inferredRole = "super_admin";
-            console.log("AuthContext - Found super_admin token claim");
-          } else if ((id.claims as any)?.admin) {
-            inferredRole = "admin"; 
-            console.log("AuthContext - Found admin token claim");
-          } else {
-            console.log("AuthContext - No admin claims found, defaulting to client");
-          }
-          console.log("AuthContext - Final inferred role:", inferredRole);
-        }
-      } catch (err) {
-        // If token claim read fails, fall back to client role.
-        console.warn("Could not read token claims while inferring role:", err);
-      }
-
-      const defaultProfile = {
-        firstName: "",
-        lastName: "",
-        email: auth.currentUser?.email ?? "",
-        company: null,
-        companyDomain: null,
-        domain: "Other",
-        role: inferredRole,
-        createdAt: new Date().toISOString(),
-      };
-
-      console.log("AuthContext - Creating default profile:", defaultProfile);
-      await setDoc(ref, defaultProfile);
-      setProfile(defaultProfile);
+      // If profile doesn't exist, do NOT auto-create. Treat as unregistered.
+      console.log("AuthContext - No profile found for uid, leaving profile=null (unregistered)");
+      setProfile(null as any);
       return;
     } catch (err) {
       // If server fetch fails (network, permissions), log and set undefined to avoid blocking UI.

@@ -95,18 +95,13 @@ const Pricing: React.FC = () => {
           return;
         }
         setUserId(current.uid);
-        const usersQ = await (await import("firebase/firestore")).getDocs(
-          (await import("firebase/firestore")).query(
-            (await import("firebase/firestore")).collection(fs, "users"),
-            (await import("firebase/firestore")).where("uid", "==", current.uid)
-          )
-        );
-        if (usersQ.empty) {
+        const userDocRef = (await import("firebase/firestore")).doc(fs, "users", current.uid);
+        const userDocSnap = await (await import("firebase/firestore")).getDoc(userDocRef);
+        if (!userDocSnap.exists()) {
           setAllowed(false);
           return;
         }
-        const docSnap = usersQ.docs[0];
-        const u = docSnap.data() as any;
+        const u = userDocSnap.data() as any;
         const isAdmin = u?.role === "admin" && u?.status === "active";
         const paid = !!u?.paid;
         setUserPaid(paid);
@@ -127,12 +122,10 @@ const Pricing: React.FC = () => {
   const handleCompletePayment = async () => {
     try {
       const { firestore: fs } = await import("@/lib/firebase");
-      const { getDocs, query, collection, where, updateDoc } = await import("firebase/firestore");
+      const { doc: fdoc, updateDoc, serverTimestamp: st } = await import("firebase/firestore");
       if (!userId) return;
-      const usersQ = await getDocs(query(collection(fs, "users"), where("uid", "==", userId)));
-      if (!usersQ.empty) {
-        await updateDoc(usersQ.docs[0].ref, { paid: true, paidAt: (await import("firebase/firestore")).serverTimestamp() });
-      }
+      const ref = fdoc(fs, "users", userId);
+      await updateDoc(ref, { paid: true, paidAt: st() });
       // If this page opened via invite, mark it used
       if (inviteId) {
         const { doc: d, updateDoc: upd } = await import("firebase/firestore");

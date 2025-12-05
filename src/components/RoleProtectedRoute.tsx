@@ -31,12 +31,19 @@ export const RoleProtectedRoute: React.FC<{ children: React.ReactNode; requiredR
     return <Navigate to="/waiting-approval" replace />;
   }
 
-  // If there's no profile yet, allow client routes to render (most users are clients by default)
-  // but keep stricter handling for admin and super_admin routes.
+  // If there's no profile, treat as unregistered — block all routes
   if (!profile) {
-    // Without a loaded profile, do not allow privileged routes; wait briefly then route to a safe default.
     if (!timedOut) return null;
-    return <Navigate to="/client-dashboard" replace />;
+    return <Navigate to="/login" replace />;
+  }
+
+  // Admin unpaid gating: if accessing admin routes and unpaid, send to pricing
+  if (requiredRole === "admin" && profile.role === "admin") {
+    const isActive = profile?.status === "active";
+    const isPaid = !!profile?.paid;
+    if (isActive && !isPaid) {
+      return <Navigate to="/pricing" replace />;
+    }
   }
 
   if (profile.role !== requiredRole) {

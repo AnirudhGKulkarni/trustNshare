@@ -14,8 +14,8 @@ const FrontNavbar: React.FC<FrontNavbarProps> = ({ isDarkMode = false, onThemeTo
   const { currentUser, profile } = useAuth();
 
   const dashboardRoute = useMemo(() => {
-    // If not logged in, no dashboard
-    if (!currentUser) return null;
+    // If not logged in or profile missing, no dashboard
+    if (!currentUser || !profile) return null;
 
     // If status pending -> waiting approval
     if (profile?.status === "pending") return "/waiting-approval";
@@ -184,7 +184,7 @@ const FrontNavbar: React.FC<FrontNavbarProps> = ({ isDarkMode = false, onThemeTo
                   Dashboard
                 </Link>
               )}
-              {!currentUser && (
+              {(!currentUser || !profile) && (
                 <>
                   <Link
                     to="/login"
@@ -310,7 +310,7 @@ const FrontNavbar: React.FC<FrontNavbarProps> = ({ isDarkMode = false, onThemeTo
                   Dashboard
                 </Link>
               )}
-              {!currentUser && (
+              {(!currentUser || !profile) && (
                 <>
                   <Link
                     to="/login"
