@@ -37,6 +37,7 @@ import Chat from "./pages/Chat";
 import LoginHistory from "./pages/LoginHistory";
 import AlertCenter from "./pages/AlertCenter";
 import SecuritySettings from "./pages/SecuritySettings";
+import WaitingApproval from "./pages/WaitingApproval";
 
 // components
 import { RoleProtectedRoute } from "./components/RoleProtectedRoute";
@@ -158,6 +159,7 @@ const App = () => (
             <Route path="/signup" element={<Signup />} />
             <Route path="/admin-signup" element={<AdminSignup />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/waiting-approval" element={<WaitingApproval />} />
 
             {/* Admin routes */}
             <Route

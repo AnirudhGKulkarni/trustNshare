@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { getDoc, doc, setDoc } from "firebase/firestore";
+import { getDoc, doc, setDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { firestore, auth } from "@/lib/firebase";
 import { GoogleAuthProvider, signInWithPopup, getIdTokenResult } from "firebase/auth";
 
@@ -146,6 +146,32 @@ const Auth: React.FC = () => {
       try {
         const snap = await getDoc(doc(firestore, "users", user.uid));
         const profile = snap.exists() ? snap.data() : null;
+
+        // If status is pending and admin signup exists, redirect to waiting page
+        if (profile?.status === "pending") {
+          try {
+            const q = query(
+              collection(firestore, "approval_documents"),
+              where("email", "==", profile?.email ?? user.email ?? ""),
+              where("status", "==", "pending")
+            );
+            const s = await getDocs(q);
+            if (!s.empty) {
+              navigate("/waiting-approval");
+              return;
+            } else {
+              toast.message("Please complete Admin Registration.");
+              navigate("/admin-signup");
+              return;
+            }
+          } catch (checkErr) {
+            console.warn("Admin signup check failed:", checkErr);
+            // If we can't verify, guide user to Admin Signup
+            navigate("/admin-signup");
+            return;
+          }
+        }
+
         toast.success("Login successful!");
 
         // Prefer authoritative Firestore profile when available.
@@ -381,14 +407,9 @@ const Auth: React.FC = () => {
         console.warn("Could not save username to user profile:", err);
       }
 
-      toast.success("Account created! Please sign in.");
-      setMode("signin");
-      setShowWelcomeBack(true);
-      // Clear shared login fields so the login toggle shows empty inputs
-      setEmail("");
-      setPassword("");
-      setConfirm("");
-      setUsername("");
+      toast.success("Account created! Please complete Admin Registration.");
+      // Navigate to Admin Signup to submit verification documents
+      navigate("/admin-signup");
     } catch (err: any) {
       toast.error(err?.message ?? "Sign up failed");
     } finally {

@@ -133,6 +133,22 @@ const AdminApproval = () => {
         approvedAt: serverTimestamp(),
       });
 
+      // Also update existing user doc if it exists (for users who signed up first)
+      try {
+        const userQuery = query(collection(firestore, 'users'), where('email', '==', request.email));
+        const userSnap = await getDocs(userQuery);
+        if (!userSnap.empty) {
+          const userDocRef = userSnap.docs[0].ref;
+          await updateDoc(userDocRef, {
+            status: 'active',
+            role: 'admin',
+            approvedAt: serverTimestamp(),
+          });
+        }
+      } catch (err) {
+        console.warn('Could not update existing user status:', err);
+      }
+
       // Update approval document status
       await updateDoc(doc(firestore, 'approval_documents', request.id), {
         status: 'approved',
