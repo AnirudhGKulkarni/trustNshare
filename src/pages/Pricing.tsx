@@ -182,11 +182,10 @@ const Pricing: React.FC = () => {
 
         <div className="max-w-7xl mx-auto relative z-10 text-center animate-fade-in">
           <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">
-            Simple, Transparent Pricing
+            Congratulations
           </h1>
           <p className="text-xl opacity-90 mb-8 max-w-2xl mx-auto">
-            Choose the plan that fits your organization. No hidden fees, no surprises.<br></br>
-            You have been approved by the Super Admin.<br></br>
+            Your account has been approved.<br></br>
             Activate your plan to start managing your organization with admin access.<br></br>
           </p>
           
