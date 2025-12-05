@@ -262,7 +262,7 @@ const Pricing: React.FC = () => {
             <table className={`w-full ${isDarkMode ? "bg-gray-800" : "bg-white"}`}>
               <thead>
                 <tr className={`border-b ${isDarkMode ? "border-gray-700 bg-gray-700" : "border-gray-200 bg-gray-50"}`}>
-                  <th className={`px-6 py-4 text-left font-bold ${isDarkMode ? "text-white" : "text-gray-900"}`}>Feature</th>
+                  <th className={`pl-10 pr-6 py-4 text-left font-bold ${isDarkMode ? "text-white" : "text-gray-900"}`}>Feature</th>
                   <th className={`px-6 py-4 text-center font-bold ${isDarkMode ? "text-white" : "text-gray-900"}`}>Starter</th>
                   <th className={`px-6 py-4 text-center font-bold text-blue-600`}>Professional</th>
                 </tr>
@@ -273,7 +273,7 @@ const Pricing: React.FC = () => {
                     key={idx}
                     className={`border-b transition-all duration-300 group hover:scale-x-105 ${isDarkMode ? "border-gray-700 hover:bg-gray-700/50" : "border-gray-100 hover:bg-blue-50"}`}
                   >
-                    <td className={`px-6 py-4 font-semibold ${isDarkMode ? "text-white" : "text-gray-900"}`}>
+                    <td className={`pl-10 pr-6 py-4 font-semibold ${isDarkMode ? "text-white" : "text-gray-900"}`}>
                       {feature.name}
                     </td>
                     <td className={`px-6 py-4 text-center group-hover:scale-110 transition-transform ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>
