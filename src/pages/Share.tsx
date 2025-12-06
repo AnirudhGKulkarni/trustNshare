@@ -1,17 +1,37 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import { Upload, Shield, Share2, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
+import policiesJson from '@/data/policies.json';
+import { auth, firestore } from '@/lib/firebase';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { useNavigate } from 'react-router-dom';
 
 const Share = () => {
   const [file, setFile] = useState<File | null>(null);
-  const [maskPII, setMaskPII] = useState(true);
   const [isSharing, setIsSharing] = useState(false);
   const [shared, setShared] = useState(false);
+  const [policy, setPolicy] = useState<any | null>(null);
+  const [isPolicyDialogOpen, setIsPolicyDialogOpen] = useState(false);
+  const [availablePolicies, setAvailablePolicies] = useState<any[]>([]);
+  const [viewPolicy, setViewPolicy] = useState<any | null>(null);
+  const navigate = useNavigate();
+
+  const [isClientDialogOpen, setIsClientDialogOpen] = useState(false);
+  const [clients, setClients] = useState<any[]>([]);
+  const [selectedClientIds, setSelectedClientIds] = useState<string[]>([]);
+  const [selectedClients, setSelectedClients] = useState<any[]>([]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -26,13 +46,80 @@ const Share = () => {
       toast.error('Please upload a file first');
       return;
     }
+    if (!policy) {
+      toast.error('Please create or select a security policy before sharing');
+      return;
+    }
+    if (selectedClients.length === 0) {
+      toast.error('Please choose one or more recipients before sharing');
+      return;
+    }
 
+    // perform simulated share
     setIsSharing(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    await new Promise((r) => setTimeout(r, 1200));
     setIsSharing(false);
     setShared(true);
-    toast.success('Data shared securely!');
+    toast.success(`Data shared securely to ${selectedClients.length} client(s)`);
+  };
+
+  const loadPolicies = () => {
+    try {
+      const raw = localStorage.getItem('policies_v1');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        setAvailablePolicies(parsed);
+        return;
+      }
+    } catch (e) {
+      // ignore
+    }
+    // fallback to static JSON
+    setAvailablePolicies((policiesJson as any) || []);
+  };
+
+  useEffect(() => {
+    const fetchClients = async () => {
+      try {
+        const q = query(collection(firestore, 'users'), where('role', '==', 'client'), where('status', '==', 'active'));
+        const snapshot = await getDocs(q);
+        const fetched: any[] = [];
+        snapshot.forEach((d) => {
+          const data = d.data() as any;
+          fetched.push({ uid: data?.uid ?? d.id, firstName: data?.firstName ?? '', lastName: data?.lastName ?? '', email: data?.email ?? '' });
+        });
+        setClients(fetched);
+      } catch (e) {
+        console.error('Failed to fetch clients', e);
+        toast.error('Failed to load clients');
+      }
+    };
+
+    if (isClientDialogOpen) {
+      fetchClients();
+    }
+  }, [isClientDialogOpen]);
+
+  useEffect(() => {
+    loadPolicies();
+  }, []);
+
+  const toggleClientSelection = (uid: string) => {
+    setSelectedClientIds((prev) => {
+      if (prev.includes(uid)) return prev.filter((p) => p !== uid);
+      return [...prev, uid];
+    });
+  };
+
+  const confirmClientShare = async () => {
+    if (selectedClientIds.length === 0) {
+      toast.error('Select one or more clients to share with');
+      return;
+    }
+    const chosen = clients.filter((c) => selectedClientIds.includes(c.uid));
+    setSelectedClients(chosen);
+    setIsClientDialogOpen(false);
+    toast.success(`${chosen.length} recipient(s) selected`);
   };
 
   return (
@@ -58,7 +145,7 @@ const Share = () => {
                     id="file-upload"
                     className="hidden"
                     onChange={handleFileChange}
-                    accept=".csv,.xlsx,.json"
+                    accept="*/*"
                   />
                   <label htmlFor="file-upload" className="cursor-pointer">
                     <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
@@ -66,7 +153,7 @@ const Share = () => {
                       {file ? file.name : 'Click to upload or drag and drop'}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      CSV, XLSX, or JSON (Max 10MB)
+                      All file types accepted
                     </p>
                   </label>
                 </div>
@@ -86,33 +173,65 @@ const Share = () => {
 
               <div className="space-y-4">
                 <div className="flex items-center justify-between p-4 rounded-lg border border-border">
-                  <div className="space-y-0.5">
-                    <Label htmlFor="mask-pii" className="text-base font-medium">
-                      Mask PII
-                    </Label>
-                    <p className="text-sm text-muted-foreground">
-                      Automatically mask sensitive information
-                    </p>
+                  <div>
+                    <Label className="text-base font-medium">Security Policy</Label>
+                    <p className="text-sm text-muted-foreground">Create or select a security policy for this share</p>
                   </div>
-                  <Switch
-                    id="mask-pii"
-                    checked={maskPII}
-                    onCheckedChange={setMaskPII}
-                  />
+                  <div className="flex items-center gap-2">
+                    <Button className="bg-primary text-primary-foreground" onClick={() => navigate('/policies?openCreate=true')}>Create Policy</Button>
+                    <Dialog open={isPolicyDialogOpen} onOpenChange={setIsPolicyDialogOpen}>
+                        <DialogTrigger asChild>
+                          <Button variant="outline">Select Policy</Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Select Security Policy</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-3 mt-2">
+                          {availablePolicies.map((p: any, idx: number) => (
+                            <div key={idx} className="flex items-center justify-between p-3 border rounded">
+                              <div>
+                                <div className="font-medium">{p.policyName}</div>
+                                <div className="text-xs text-muted-foreground">{p.policyCategory}</div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  onClick={() => {
+                                    setPolicy(p);
+                                    setIsPolicyDialogOpen(false);
+                                    toast.success(`${p.policyName} selected`);
+                                  }}
+                                >
+                                  Select
+                                </Button>
+                                <Button variant="outline" size="sm" onClick={() => setViewPolicy(p)}>View</Button>
+                              </div>
+                            </div>
+                          ))}
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                    </div>
                 </div>
 
-                {maskPII && (
-                  <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
-                    <div className="flex gap-3">
-                      <Shield className="h-5 w-5 text-primary mt-0.5" />
-                      <div>
-                        <p className="text-sm font-medium">Protected Fields</p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          SSN, Credit Card Numbers, Email, Phone Numbers will be masked
-                        </p>
+                {policy ? (
+                  <>
+                    <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
+                      <div className="flex gap-3">
+                        <Shield className="h-5 w-5 text-primary mt-0.5" />
+                        <div>
+                          <p className="text-sm font-medium">{policy.policyName}</p>
+                          <p className="text-xs text-muted-foreground mt-1">{policy.policyDescription}</p>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                    <div className="flex justify-end">
+                      <Button onClick={() => setIsClientDialogOpen(true)}>Choose Recipients</Button>
+                    </div>
+                  </>
+                ) : (
+                  // intentionally blank when no policy selected
+                  <div />
                 )}
               </div>
 
@@ -146,42 +265,86 @@ const Share = () => {
                   </div>
                 </div>
               )}
+              {/* Policy view dialog (reuses policy detail display similar to Policies page) */}
+              <Dialog open={Boolean(viewPolicy)} onOpenChange={(v) => { if (!v) setViewPolicy(null); }}>
+                <DialogContent className="w-full sm:w-[640px] max-h-[80vh]">
+                  <DialogHeader>
+                    <DialogTitle>{viewPolicy?.policyName}</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 mt-4 max-h-[60vh] overflow-auto pr-2">
+                    {viewPolicy && (
+                      <>
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Description</p>
+                          <div className="mt-2 text-sm">{viewPolicy.policyDescription}</div>
+                        </div>
+
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Protected Fields</p>
+                          <div className="mt-2 space-y-2">
+                            {(viewPolicy.protectedFields || []).map((pf: any, i: number) => (
+                              <div key={i} className="p-2 border rounded">
+                                <div className="font-medium">{pf.field}</div>
+                                {pf.reason && <div className="text-xs text-muted-foreground">{pf.reason}</div>}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Allowed Actions</p>
+                          <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
+                            {viewPolicy.allowedActions && Object.entries(viewPolicy.allowedActions).map(([k, v]: any) => (
+                              <div key={k} className="p-2 border rounded">
+                                <div className="font-medium">{k}</div>
+                                <div className="text-xs text-muted-foreground">{v.allowed ? 'Allowed' : 'Not allowed'}</div>
+                                {v.notes && <div className="text-xs text-muted-foreground mt-1">{v.notes}</div>}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  <div className="flex justify-end gap-3 mt-4">
+                    <Button variant="outline" onClick={() => setViewPolicy(null)}>Close</Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </CardContent>
           </Card>
 
           <Card className="shadow-card">
-            <CardHeader>
+            <CardHeader className="flex items-center justify-between">
               <CardTitle>Sharing Preview</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <div className="rounded-lg border border-border overflow-hidden">
                   <div className="bg-secondary px-4 py-2 border-b border-border">
-                    <p className="text-sm font-medium">Sample Data</p>
+                    <p className="text-sm font-medium">Sharing Preview</p>
                   </div>
                   <div className="p-4 space-y-3">
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                      <div className="text-muted-foreground">Name:</div>
-                      <div className="font-mono">John Doe</div>
-                      
-                      <div className="text-muted-foreground">Email:</div>
-                      <div className="font-mono">
-                        {maskPII ? '****@***.com' : 'john@email.com'}
+                    {selectedClients.length > 0 ? (
+                      <div className="space-y-3">
+                        <div className="text-sm text-muted-foreground">Data sharing to:</div>
+                        {selectedClients.map((c) => (
+                          <div key={c.uid} className="grid grid-cols-2 gap-x-4 text-sm">
+                            <div className="text-muted-foreground">Name:</div>
+                            <div className="font-medium">{c.firstName} {c.lastName}</div>
+                            <div className="text-muted-foreground">Email:</div>
+                            <div className="font-mono">{c.email}</div>
+                          </div>
+                        ))}
                       </div>
-                      
-                      <div className="text-muted-foreground">SSN:</div>
-                      <div className="font-mono">
-                        {maskPII ? '***-**-****' : '123-45-6789'}
+                    ) : (
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                        <div className="text-muted-foreground">Name:</div>
+                        <div className="font-mono">&nbsp;</div>
+                        <div className="text-muted-foreground">Email:</div>
+                        <div className="font-mono">&nbsp;</div>
                       </div>
-                      
-                      <div className="text-muted-foreground">Phone:</div>
-                      <div className="font-mono">
-                        {maskPII ? '***-***-****' : '555-123-4567'}
-                      </div>
-                      
-                      <div className="text-muted-foreground">Address:</div>
-                      <div className="font-mono">123 Main St</div>
-                    </div>
+                    )}
                   </div>
                 </div>
 
@@ -218,6 +381,38 @@ const Share = () => {
             </CardContent>
           </Card>
         </div>
+        {/* Client selection dialog for sharing */}
+        <Dialog open={isClientDialogOpen} onOpenChange={setIsClientDialogOpen}>
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>Select Client(s) to Share With</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 mt-2">
+              <div className="max-h-64 overflow-y-auto space-y-2">
+                {clients.length === 0 && <div className="text-sm text-muted-foreground">No clients found</div>}
+                {clients.map((c) => (
+                  <label key={c.uid} className="flex items-center justify-between p-2 border rounded">
+                    <div>
+                      <div className="font-medium">{c.firstName} {c.lastName}</div>
+                      <div className="text-xs text-muted-foreground">{c.email}</div>
+                    </div>
+                    <div>
+                      <Checkbox checked={selectedClientIds.includes(c.uid)} onCheckedChange={() => toggleClientSelection(c.uid)} />
+                    </div>
+                  </label>
+                ))}
+              </div>
+              <div className="flex justify-end gap-3">
+                <Button variant="outline" onClick={() => { setIsClientDialogOpen(false); setSelectedClientIds([]); }}>
+                  Cancel
+                </Button>
+                <Button onClick={confirmClientShare} disabled={isSharing}>
+                  {isSharing ? 'Sharing...' : 'Share to Selected'}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </DashboardLayout>
   );

@@ -12,7 +12,6 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { LogOut, Settings, User, Activity, FileText, Shield, MessageSquare, Clock, Bell, Lock, ArrowUp, Upload } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from "recharts";
-import { ClientSidebar } from "@/components/layout/ClientSidebar";
 
 type SensitivityBucket = "public" | "internal" | "confidential";
 
@@ -218,45 +217,71 @@ const ClientDashboard: React.FC = () => {
   useEffect(() => {
     if (!currentUser) return;
 
-    const sharedDataRef = collection(firestore, 'shared_data');
-    const unsubscribe = onSnapshot(sharedDataRef, (snapshot) => {
-      const counts: Record<SensitivityBucket, number> = { public: 0, internal: 0, confidential: 0 };
+    const sharedDataRef = collection(firestore, "shared_data");
+    const unsubscribe = onSnapshot(
+      sharedDataRef,
+      (snapshot) => {
+        const counts: Record<SensitivityBucket, number> = {
+          public: 0,
+          internal: 0,
+          confidential: 0,
+        };
 
-      snapshot.forEach((docSnap) => {
-        const data = docSnap.data() as Record<string, unknown>;
-        const ownerId = typeof data.ownerId === 'string' ? data.ownerId : typeof data.userId === 'string' ? data.userId : undefined;
-        const sharedWith = Array.isArray(data.sharedWith) ? data.sharedWith : [];
+        snapshot.forEach((docSnap) => {
+          const data = docSnap.data() as any;
 
-        if (sharedWith.length > 0 && !sharedWith.includes(currentUser.uid) && ownerId !== currentUser.uid) {
-          return;
-        }
+          const ownerId =
+            typeof data.ownerId === "string"
+              ? data.ownerId
+              : typeof data.userId === "string"
+              ? data.userId
+              : undefined;
 
-        const bucket = normalizeSensitivity(
-          data.sensitivity ??
-          data.classification ??
-          data.confidentiality ??
-          data.securityLevel ??
-          data.sensitivityLevel ??
-          data.level ??
-          data.risk ??
-          data.category
+          // sharedWith is an array of objects like { userId: "..." }
+          const sharedWithArray: { userId?: string }[] = Array.isArray(
+            data.sharedWith
+          )
+            ? data.sharedWith
+            : [];
+
+          const isOwner = ownerId === currentUser.uid;
+          const isExplicitlyShared = sharedWithArray.some(
+            (entry) => entry.userId === currentUser.uid
+          );
+
+          // Only count docs the current user should see
+          if (!isOwner && !isExplicitlyShared) {
+            return;
+          }
+
+          const bucket = normalizeSensitivity(
+            data.sensitivity ??
+              data.classification ??
+              data.confidentiality ??
+              data.securityLevel ??
+              data.sensitivityLevel ??
+              data.level ??
+              data.risk ??
+              data.category
+          );
+
+          counts[bucket] = (counts[bucket] ?? 0) + 1;
+        });
+
+        setFileSensitivityData(
+          SENSITIVITY_ORDER.map((bucket) => ({
+            key: bucket,
+            name: SENSITIVITY_CONFIG[bucket].name,
+            color: SENSITIVITY_CONFIG[bucket].color,
+            value: counts[bucket] ?? 0,
+          }))
         );
-
-        counts[bucket] = (counts[bucket] ?? 0) + 1;
-      });
-
-      setFileSensitivityData(
-        SENSITIVITY_ORDER.map((bucket) => ({
-          key: bucket,
-          name: SENSITIVITY_CONFIG[bucket].name,
-          color: SENSITIVITY_CONFIG[bucket].color,
-          value: counts[bucket] ?? 0,
-        }))
-      );
-    }, (error) => {
-      console.error('Error fetching file sensitivity data:', error);
-      setFileSensitivityData(buildEmptySensitivityData());
-    });
+      },
+      (error) => {
+        console.error("Error fetching file sensitivity data:", error);
+        setFileSensitivityData(buildEmptySensitivityData());
+      }
+    );
 
     return () => unsubscribe();
   }, [currentUser]);
@@ -277,9 +302,24 @@ const ClientDashboard: React.FC = () => {
         const data = docSnap.data() as Record<string, unknown>;
         const actionRaw = data.action;
         const normalizedAction = typeof actionRaw === 'string' ? actionRaw.toUpperCase() : '';
-        if (!normalizedAction.includes('LOGIN')) return;
 
-        const eventDate = coerceTimestampToDate(data.timestamp ?? data.createdAt ?? data.time);
+        // broaden detection to capture variations like 'SIGNED IN', 'SIGNIN', 'AUTH', 'SESSION', 'START', etc.
+        const isLoginEvent = (
+          normalizedAction.includes('LOGIN') ||
+          normalizedAction.includes('LOG IN') ||
+          normalizedAction.includes('SIGNED') ||
+          normalizedAction.includes('SIGNIN') ||
+          normalizedAction.includes('SIGN') ||
+          normalizedAction.includes('AUTH') ||
+          normalizedAction.includes('AUTHENTICATED') ||
+          normalizedAction.includes('AUTHORIZED') ||
+          normalizedAction.includes('SESSION') ||
+          normalizedAction.includes('START')
+        );
+
+        if (!isLoginEvent) return;
+
+        const eventDate = coerceTimestampToDate(data.timestamp ?? data.createdAt ?? data.time ?? data.ts);
         if (!eventDate) return;
 
         eventDate.setHours(0, 0, 0, 0);
@@ -410,11 +450,8 @@ const ClientDashboard: React.FC = () => {
   const hasLoginActivity = loginActivityData.some((item) => item.logins > 0);
 
   return (
-    <div className="min-h-screen bg-background flex">
-      {/* SIDEBAR */}
-      <ClientSidebar />
-
-      {/* MAIN CONTENT */}
+      <>
+      {/* MAIN CONTENT within ClientLayout sidebar */}
       <div className="flex-1 flex flex-col">
         {/* NAVBAR */}
         <header className="bg-white border-b">
@@ -582,24 +619,12 @@ const ClientDashboard: React.FC = () => {
                 </div>
 
                 <div className="flex gap-3 pt-4">
-                  <Button onClick={() => navigate("/share")}>Share a file</Button>
                   <Button variant="outline" onClick={() => navigate("/policies")}>View Policies</Button>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Account Settings</CardTitle>
-                <CardDescription>Manage small preferences and account actions</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex gap-3">
-                  <Button onClick={() => navigate("/client/settings")}>Open Settings</Button>
-                  <Button variant="outline" onClick={() => toast("No quick actions available yet")}>Quick help</Button>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Account Settings card removed as requested */}
           </div>
         </div>
       </main>
@@ -741,7 +766,7 @@ const ClientDashboard: React.FC = () => {
           </form>
         </div>
       )}
-    </div>
+    </>
   );
 };
 

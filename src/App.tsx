@@ -26,6 +26,7 @@ import ClientDashboard from "./pages/ClientDashboard";
 import ClientProfile from "./pages/ClientProfile";
 import ClientSettings from "./pages/ClientSettings";
 import ClientShare from "./pages/ClientShare";
+import ClientLayout from "./components/layout/ClientLayout";
 import NotFound from "./pages/NotFound";
 import FrontPage from "./pages/FrontPage";
 import Pricing from "./pages/Pricing";
@@ -298,39 +299,20 @@ const App = () => (
               }
             />
 
-            {/* Client routes */}
+            {/* Client routes with shared sidebar layout */}
             <Route
               path="/client"
               element={
                 <RoleProtectedRoute requiredRole="client">
-                  <ClientDashboard />
+                  <ClientLayout />
                 </RoleProtectedRoute>
               }
-            />
-            <Route
-              path="/client/profile"
-              element={
-                <RoleProtectedRoute requiredRole="client">
-                  <ClientProfile />
-                </RoleProtectedRoute>
-              }
-            />
-            <Route
-              path="/client/settings"
-              element={
-                <RoleProtectedRoute requiredRole="client">
-                  <ClientSettings />
-                </RoleProtectedRoute>
-              }
-            />
-            <Route
-              path="/client/share"
-              element={
-                <RoleProtectedRoute requiredRole="client">
-                  <ClientShare />
-                </RoleProtectedRoute>
-              }
-            />
+            >
+              <Route index element={<ClientDashboard />} />
+              <Route path="profile" element={<ClientProfile />} />
+              <Route path="settings" element={<ClientSettings />} />
+              <Route path="share" element={<ClientShare />} />
+            </Route>
 
             {/* auto redirect */}
             <Route path="/home-redirect" element={<HomeRedirect />} />

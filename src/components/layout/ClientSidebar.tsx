@@ -12,13 +12,12 @@ import {
 import { cn } from '@/lib/utils';
 
 const navigation = [
-  { name: 'Dashboard', href: '/client-dashboard', icon: Home },
-  { name: 'My Files', href: '/client/files', icon: FolderOpen },
-  { name: 'Share Files', href: '/share', icon: Upload },
-  { name: 'Messages', href: '/chat', icon: MessageSquare },
-  { name: 'Activity', href: '/login-history', icon: History },
-  { name: 'Notifications', href: '/alert-center', icon: BellDot },
-  { name: 'Security', href: '/security-settings', icon: Lock },
+  { name: 'Dashboard', href: '/client', icon: Home, end: true },
+  { name: 'Share Files', href: '/client/share', icon: Upload },
+  { name: 'Messages', href: '/client/messages', icon: MessageSquare },
+  { name: 'Activity', href: '/client/activity', icon: History },
+  { name: 'Notifications', href: '/client/notifications', icon: BellDot },
+  { name: 'Security', href: '/client/security', icon: Lock },
   { name: 'Profile', href: '/client/profile', icon: UserCircle },
 ];
 
@@ -42,6 +41,7 @@ export const ClientSidebar = () => {
           <NavLink
             key={item.name}
             to={item.href}
+            end={(item as any).end}
             className={({ isActive }) =>
               cn(
                 'flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200',

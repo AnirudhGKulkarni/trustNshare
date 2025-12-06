@@ -51,6 +51,10 @@ export const Navbar = () => {
       </div>
 
       <div className="flex items-center gap-4">
+        {/* Connect to Hardware button positioned near top-right (no-op for now) */}
+        <div className="hidden sm:block">
+          <button className="px-3 py-1 rounded-md bg-blue-700 text-white text-sm font-medium hover:opacity-95">Connect to Hardware</button>
+        </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="flex items-center gap-2">

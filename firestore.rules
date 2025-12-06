@@ -107,6 +107,18 @@ service cloud.firestore {
       allow update, delete: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isAdminOrSuperAdmin());
     }
 
+    // Per-user login counters
+    match /user_logins/{userId} {
+      // Creation/update: user may update their own login counter document
+      allow create, update: if isSignedIn() && (request.auth.uid == userId || isAdminOrSuperAdmin());
+
+      // Read: owner or admins can read
+      allow read: if isSignedIn() && (request.auth.uid == userId || isAdminOrSuperAdmin());
+
+      // Prevent client-side deletes
+      allow delete: if isSuperAdmin();
+    }
+
     // Fallback: deny everything else
     match /{document=**} {
       allow read, write: if false;

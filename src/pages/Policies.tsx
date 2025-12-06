@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -114,6 +115,21 @@ const Policies = () => {
       // ignore
     }
   }, [policies]);
+
+  // If navigated with ?openCreate=true, open create dialog
+  const location = useLocation();
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(location.search);
+      if (params.get('openCreate') === 'true') {
+        setEditingPolicy(null);
+        setFormData({ ...emptyForm });
+        setIsDialogOpen(true);
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, [location.search]);
 
   const openCreate = () => {
     setEditingPolicy(null);

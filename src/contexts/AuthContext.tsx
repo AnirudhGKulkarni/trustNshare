@@ -10,7 +10,7 @@ import {
   User,
 } from "firebase/auth";
 import { auth, firestore } from "@/lib/firebase";
-import { doc, setDoc, getDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc, updateDoc, addDoc, collection, serverTimestamp, increment } from "firebase/firestore";
 
 type SignupData = {
   email: string;
@@ -79,6 +79,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Force a second load attempt to ensure fresh data
     await new Promise(resolve => setTimeout(resolve, 200));
     await loadProfile(cred.user.uid);
+    // Record login timestamp and increment total login count for the user
+    try {
+      const userLogRef = doc(firestore, "user_logins", cred.user.uid);
+      await setDoc(userLogRef, { lastLogin: serverTimestamp(), totalLogins: increment(1) }, { merge: true });
+    } catch (e) {
+      console.warn("Failed to write user_logins doc:", e);
+    }
+
+    // Append an audit log entry for analytics / timeline
+    try {
+      await addDoc(collection(firestore, "audit_logs"), {
+        userId: cred.user.uid,
+        action: "LOGIN",
+        timestamp: serverTimestamp(),
+        createdAt: serverTimestamp(),
+      });
+    } catch (e) {
+      console.warn("Failed to append audit_logs entry:", e);
+    }
     return cred.user;
   };
 
