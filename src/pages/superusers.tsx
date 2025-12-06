@@ -230,7 +230,7 @@ const SuperUsers = () => {
           </div>
           <Dialog>
             <DialogTrigger asChild>
-              <Button className="bg-gradient-to-r from-primary to-accent-foreground hover:opacity-90">
+              <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:opacity-90 text-white">
                 <UserPlus className="mr-2 h-4 w-4" />
                 Add User (Firestore)
               </Button>
@@ -283,7 +283,7 @@ const SuperUsers = () => {
           </Dialog>
         </div>
 
-        <Card className="shadow-card">
+        <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2"><UsersIcon className="h-5 w-5"/> Users</CardTitle>
@@ -313,7 +313,7 @@ const SuperUsers = () => {
           <CardContent>
             <div className="space-y-3 max-h-[520px] overflow-auto pr-1">
               {filtered.map((u) => (
-                <div key={u.id} className="flex items-center justify-between gap-3 p-3 rounded-lg border">
+                <div key={u.id} className="flex items-center justify-between gap-3 p-3 rounded-lg border hover:bg-secondary/50">
                   <div className="min-w-0">
                     <p className="text-sm font-medium truncate">{u.firstName || u.lastName ? `${u.firstName || ''} ${u.lastName || ''}`.trim() : (u.email || 'Unnamed')}</p>
                     <p className="text-xs text-muted-foreground truncate">{u.email}</p>

@@ -1,6 +1,10 @@
 import { Shield } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const DashboardFooter = () => {
+  const { profile } = useAuth();
+  const isSuperAdmin = profile?.role === 'super_admin';
+
   return (
     <footer className="bg-card border-t border-border text-muted-foreground py-8 px-6 mt-8">
       <div className="max-w-7xl mx-auto">
@@ -8,10 +12,10 @@ export const DashboardFooter = () => {
           {/* Brand / About */}
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
                 <Shield className="w-5 h-5 text-white" />
               </div>
-              <span className="text-lg font-bold text-foreground">trustNshare</span>
+              <span className="text-foreground text-lg font-bold">trustNshare</span>
             </div>
             <p className="text-sm leading-relaxed">
               Enterprise-grade file sharing with military-grade encryption and complete compliance.
@@ -20,7 +24,7 @@ export const DashboardFooter = () => {
 
           {/* Contact & Support */}
           <div>
-            <h3 className="font-semibold text-foreground mb-4">Contact & Support</h3>
+            <h3 className="text-foreground font-semibold mb-4">Contact & Support</h3>
             <div className="space-y-2">
               <div className="text-sm">superadmin@trustnshare.com</div>
               <div className="text-sm">+91 1234567890</div>
@@ -29,7 +33,7 @@ export const DashboardFooter = () => {
 
           {/* Company */}
           <div>
-            <h3 className="font-semibold text-foreground mb-4">Company</h3>
+            <h3 className="text-foreground font-semibold mb-4">Company</h3>
             <ul className="space-y-2">
               <li>
                 <a
@@ -81,7 +85,7 @@ export const DashboardFooter = () => {
                     key={social.label}
                     href="#"
                     title={social.label}
-                    className="w-8 h-8 rounded-full border border-border flex items-center justify-center hover:border-primary hover:text-primary hover:bg-primary/10 transition-all duration-300 text-muted-foreground hover:scale-110 active:scale-95 text-xs"
+                    className={`${isSuperAdmin ? 'text-slate-300 border-slate-700 hover:text-blue-300 hover:border-blue-400 hover:bg-blue-900/20' : 'text-muted-foreground hover:text-primary hover:border-primary hover:bg-primary/10'} w-8 h-8 rounded-full border flex items-center justify-center transition-all duration-300 text-xs`}
                   >
                     {social.icon}
                   </a>

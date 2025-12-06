@@ -9,6 +9,7 @@ import { Search, Filter, Download, User, Shield, Activity, Calendar, Eye } from 
 import { collection, query, orderBy, limit, getDocs, where } from 'firebase/firestore';
 import { firestore } from '@/lib/firebase';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface AuditLog {
   id: string;
@@ -25,6 +26,8 @@ interface AuditLog {
 }
 
 const EnhancedAuditLogs = () => {
+  const { profile } = useAuth();
+  const isSuperAdmin = profile?.role === 'super_admin';
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [filteredLogs, setFilteredLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
@@ -288,7 +291,7 @@ const EnhancedAuditLogs = () => {
           <div>
             <h2 className="text-3xl font-bold tracking-tight">Audit Logs</h2>
             <p className="text-muted-foreground mt-1">
-              Monitor all system activities from admins and clients
+              Monitor all system activities and security events
             </p>
           </div>
           <Button onClick={exportToCSV} variant="outline">
@@ -375,9 +378,9 @@ const EnhancedAuditLogs = () => {
                   return (
                     <div
                       key={log.id}
-                      className="flex items-start gap-4 p-4 border rounded-lg hover:bg-secondary/50 transition-colors"
+                      className="flex items-start gap-4 p-4 border rounded-lg transition-colors hover:bg-secondary/50"
                     >
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 flex-shrink-0">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg flex-shrink-0 bg-primary/10">
                         <ActionIcon className="h-5 w-5 text-primary" />
                       </div>
 

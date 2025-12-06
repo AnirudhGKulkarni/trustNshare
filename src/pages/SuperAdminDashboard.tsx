@@ -146,9 +146,9 @@ const SuperAdminDashboard = () => {
               return { name: 'System Activity', value: `${percent}%`, icon: Activity };
             })(),
           ].map((stat, i) => (
-            <Card key={i} className="overflow-hidden transition-all hover:shadow-lg">
+            <Card key={i} className="overflow-hidden transition-all hover:shadow-xl">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
+                <CardTitle className="text-sm font-medium">
                   {stat.name}
                 </CardTitle>
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
@@ -164,7 +164,7 @@ const SuperAdminDashboard = () => {
         </div>
 
         <div className="space-y-6">
-          <Card className="shadow-card">
+          <Card>
             <CardHeader>
               <CardTitle>Platform Growth Overview</CardTitle>
               <p className="text-sm text-muted-foreground">
@@ -174,33 +174,26 @@ const SuperAdminDashboard = () => {
             <CardContent>
               <ResponsiveContainer width="100%" height={350}>
                 <BarChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" className="text-sm" />
                   <YAxis className="text-sm" />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'hsl(var(--card))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px',
-                    }}
-                  />
+                  <Tooltip />
                   <Legend />
-                  <Bar dataKey="admins" fill="hsl(var(--primary))" name="Admins" radius={[8, 8, 0, 0]} />
-                  <Bar dataKey="clients" fill="hsl(var(--accent))" name="Clients" radius={[8, 8, 0, 0]} />
+                  <Bar dataKey="admins" fill="#3b82f6" name="Admins" radius={[8, 8, 0, 0]} />
+                  <Bar dataKey="clients" fill="#8b5cf6" name="Clients" radius={[8, 8, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
-
           <div className="grid gap-4 md:grid-cols-2">
-            <Card className="shadow-card">
+            <Card>
               <CardHeader>
                 <CardTitle>Recent Admin Requests</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   {recentRequests.map((request, i) => (
-                    <div key={i} className="flex items-center gap-4 p-3 rounded-lg bg-secondary/50">
+                    <div key={i} className="flex items-center gap-4 p-3 rounded-lg bg-secondary/50 border">
                       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
                         {request.status === 'pending' ? (
                           <AlertTriangle className="h-5 w-5 text-orange-500" />
@@ -230,7 +223,7 @@ const SuperAdminDashboard = () => {
               </CardContent>
             </Card>
 
-            <Card className="shadow-card">
+            <Card>
               <CardHeader>
                 <CardTitle>System Health</CardTitle>
               </CardHeader>

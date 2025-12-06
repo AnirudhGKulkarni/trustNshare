@@ -17,6 +17,8 @@ export const Navbar = () => {
   const { currentUser, profile, logout } = useAuth();
   const navigate = useNavigate();
 
+  const isSuperAdmin = profile?.role === 'super_admin';
+
   // Prefer profile (Firestore) data, fall back to firebase user fields
   const displayName =
     profile?.name ||
@@ -49,11 +51,6 @@ export const Navbar = () => {
       </div>
 
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-5 w-5" />
-          <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-destructive" />
-        </Button>
-
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="flex items-center gap-2">

@@ -71,8 +71,24 @@ const AdminApproval = () => {
         });
       });
 
-      // Sort by createdAt (newest first)
+      // Sort by status priority (pending first), then by createdAt (newest first)
       requestsData.sort((a, b) => {
+        // Define status priority: pending > approved > rejected
+        const statusPriority: Record<string, number> = {
+          'pending': 1,
+          'approved': 2,
+          'rejected': 3
+        };
+        
+        const aPriority = statusPriority[a.status] || 999;
+        const bPriority = statusPriority[b.status] || 999;
+        
+        // First sort by status priority
+        if (aPriority !== bPriority) {
+          return aPriority - bPriority;
+        }
+        
+        // Within same status, sort by createdAt (newest first)
         const aTime = a.createdAt?.seconds || 0;
         const bTime = b.createdAt?.seconds || 0;
         return bTime - aTime;
@@ -340,7 +356,7 @@ const AdminApproval = () => {
         ) : (
           <div className="grid gap-4">
             {requests.map((request) => (
-              <Card key={request.id} className="hover:shadow-lg transition-shadow">
+              <Card key={request.id} className="hover:shadow-xl transition-shadow">
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="space-y-1">
@@ -372,18 +388,17 @@ const AdminApproval = () => {
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
-                        <span className="font-medium">Domain:</span> {request.domain}
+                        <span className="font-medium">Domain:</span> <span className="text-muted-foreground">{request.domain}</span>
                       </div>
                       {request.customCategory && (
                         <div>
-                          <span className="font-medium">Category:</span> {request.customCategory}
+                          <span className="font-medium">Category:</span> <span className="text-muted-foreground">{request.customCategory}</span>
                         </div>
                       )}
-                      {/* Documents count removed as requested */}
                       {request.googleDriveLink && (
                         <div className="col-span-2">
                           <span className="font-medium">Drive Link:</span>{' '}
-                          <a href={request.googleDriveLink} target="_blank" rel="noopener noreferrer" className="text-primary underline">
+                          <a href={request.googleDriveLink} target="_blank" rel="noopener noreferrer" className="text-blue-400 underline">
                             Open verification documents
                           </a>
                         </div>

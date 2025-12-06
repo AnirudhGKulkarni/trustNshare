@@ -398,6 +398,52 @@ body {
    =================================== */
 
 .p-xs { padding: var(--spacing-xs); }
+
+/* Dark-mode overrides to improve contrast for Super Admin views */
+[data-theme="dark"] .text-muted-foreground {
+  /* Make muted text more readable in dark mode */
+  color: var(--text-dark-secondary) !important;
+}
+
+[data-theme="dark"] .text-muted-foreground.text-sm,
+[data-theme="dark"] .text-muted-foreground.text-xs {
+  color: var(--text-dark-tertiary) !important;
+}
+
+[data-theme="dark"] .text-foreground {
+  color: var(--text-dark-primary) !important;
+}
+
+[data-theme="dark"] .bg-card {
+  background: var(--card-dark) !important;
+}
+
+[data-theme="dark"] .border-border {
+  border-color: var(--border-dark) !important;
+}
+
+/* Make placeholders readable on dark inputs */
+[data-theme="dark"] ::placeholder {
+  color: var(--text-dark-tertiary) !important;
+  opacity: 1;
+}
+
+/* Adjust input/select/textarea backgrounds for dark mode */
+[data-theme="dark"] input,
+[data-theme="dark"] textarea,
+[data-theme="dark"] select {
+  background: var(--bg-dark-secondary) !important;
+  color: var(--text-dark-primary) !important;
+  border-color: var(--border-dark) !important;
+}
+
+/* Ensure small card panels are slightly darker for contrast */
+[data-theme="dark"] .card,
+[data-theme="dark"] .shadow-card,
+[data-theme="dark"] .shadow-xl {
+  background: rgba(30,41,59,0.85) !important;
+  border-color: var(--border-dark) !important;
+}
 .p-sm { padding: var(--spacing-sm); }
 .p-md { padding: var(--spacing-md); }
 .p-lg { padding: var(--spacing-lg); }
