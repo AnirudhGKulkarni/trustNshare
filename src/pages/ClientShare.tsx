@@ -1,6 +1,5 @@
 // src/pages/ClientShare.tsx
 import React, { useState } from "react";
-import ClientLayout from "@/components/layout/ClientLayout";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,7 +32,7 @@ const ClientShare: React.FC = () => {
   };
 
   return (
-    <ClientLayout title="Share">
+    <div className="p-6">
       <div className="grid grid-cols-1 gap-6">
         <Card>
           <CardHeader>
@@ -77,7 +76,7 @@ const ClientShare: React.FC = () => {
           </CardContent>
         </Card>
       </div>
-    </ClientLayout>
+    </div>
   );
 };
 

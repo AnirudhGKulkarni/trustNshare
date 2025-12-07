@@ -26,6 +26,11 @@ import ClientDashboard from "./pages/ClientDashboard";
 import ClientProfile from "./pages/ClientProfile";
 import ClientSettings from "./pages/ClientSettings";
 import ClientShare from "./pages/ClientShare";
+import ClientMessages from "./pages/ClientMessages";
+import ClientActivity from "./pages/ClientActivity";
+import ClientNotifications from "./pages/ClientNotifications";
+import ClientSecurity from "./pages/ClientSecurity";
+import ClientPolicies from "./pages/ClientPolicies";
 import ClientLayout from "./components/layout/ClientLayout";
 import NotFound from "./pages/NotFound";
 import FrontPage from "./pages/FrontPage";
@@ -312,6 +317,11 @@ const App = () => (
               <Route path="profile" element={<ClientProfile />} />
               <Route path="settings" element={<ClientSettings />} />
               <Route path="share" element={<ClientShare />} />
+              <Route path="messages" element={<ClientMessages />} />
+              <Route path="activity" element={<ClientActivity />} />
+              <Route path="notifications" element={<ClientNotifications />} />
+              <Route path="security" element={<ClientSecurity />} />
+              <Route path="policies" element={<ClientPolicies />} />
             </Route>
 
             {/* auto redirect */}
