@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { CheckCircle, Shield } from "lucide-react";
 import { addDoc, collection, doc, getDoc, serverTimestamp } from "firebase/firestore";
 import { firestore } from "@/lib/firebase";
@@ -64,9 +65,16 @@ const Pricing: React.FC = () => {
     }
   }, []);
 
+  const location = useLocation();
+
   useEffect(() => {
     const verifyAccess = async () => {
       try {
+        // Allow when navigated from Login (state carried via navigate)
+        if ((location as any)?.state?.fromLogin) {
+          setAllowed(true);
+          return;
+        }
         // If invite is present, validate it as before
         if (inviteId) {
           const ref = doc(firestore, "pricing_invites", inviteId);

@@ -61,7 +61,7 @@ const Login: React.FC = () => {
           const isPaid = !!profile.paid;
           toast.success("Welcome Admin!");
           if (isActive && !isPaid) {
-            navigate("/pricing");
+            navigate("/pricing", { state: { fromLogin: true } });
           } else {
             navigate("/dashboard");
           }
@@ -103,7 +103,7 @@ const Login: React.FC = () => {
                 const isActive = u?.status === "active";
                 const isPaid = !!u?.paid;
                 if (isActive && !isPaid) {
-                  navigate("/pricing");
+                  navigate("/pricing", { state: { fromLogin: true } });
                 } else {
                   navigate("/dashboard");
                 }
@@ -138,7 +138,7 @@ const Login: React.FC = () => {
                 const isActive = u?.status === "active";
                 const isPaid = !!u?.paid;
                 if (isActive && !isPaid) {
-                  navigate("/pricing");
+                  navigate("/pricing", { state: { fromLogin: true } });
                 } else {
                   navigate("/dashboard");
                 }

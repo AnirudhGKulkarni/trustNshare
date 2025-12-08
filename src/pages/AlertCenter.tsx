@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -18,124 +18,28 @@ import {
   Eye,
   Archive
 } from 'lucide-react';
+import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
+import { firestore } from '@/lib/firebase';
 
-const alerts = [
-  {
-    id: 1,
-    type: 'critical',
-    title: 'Multiple failed login attempts detected',
-    description: 'User alice.johnson@company.com has 5 failed login attempts from IP 203.0.113.45',
-    timestamp: '2024-01-15 11:30:45',
-    status: 'active',
-    category: 'authentication',
-    affectedUser: 'alice.johnson@company.com'
-  },
-  {
-    id: 2,
-    type: 'warning',
-    title: 'Suspicious file download activity',
-    description: 'Large number of files downloaded by user bob.smith@company.com in short timeframe',
-    timestamp: '2024-01-15 10:15:22',
-    status: 'investigating',
-    category: 'data-access',
-    affectedUser: 'bob.smith@company.com'
-  },
-  {
-    id: 3,
-    type: 'info',
-    title: 'System maintenance scheduled',
-    description: 'Scheduled maintenance window for database optimization on January 20th, 2024',
-    timestamp: '2024-01-15 09:00:00',
-    status: 'acknowledged',
-    category: 'system',
-    affectedUser: null
-  },
-  {
-    id: 4,
-    type: 'critical',
-    title: 'Unauthorized access attempt',
-    description: 'Login attempt from unrecognized device for admin account',
-    timestamp: '2024-01-15 08:45:33',
-    status: 'resolved',
-    category: 'security',
-    affectedUser: 'admin@company.com'
-  },
-  {
-    id: 5,
-    type: 'warning',
-    title: 'Password policy violation',
-    description: 'User carol.davis@company.com using weak password that expires soon',
-    timestamp: '2024-01-15 07:20:10',
-    status: 'active',
-    category: 'policy',
-    affectedUser: 'carol.davis@company.com'
-  },
-  {
-    id: 6,
-    type: 'info',
-    title: 'New security update available',
-    description: 'Security patch v2.1.3 is available for deployment',
-    timestamp: '2024-01-14 18:30:00',
-    status: 'pending',
-    category: 'update',
-    affectedUser: null
-  }
-];
-
-const stats = [
-  {
-    title: 'Active Alerts',
-    value: '12',
-    icon: AlertTriangle,
-    color: 'text-red-600'
-  },
-  {
-    title: 'Under Investigation',
-    value: '5',
-    icon: Eye,
-    color: 'text-yellow-600'
-  },
-  {
-    title: 'Resolved Today',
-    value: '8',
-    icon: CheckCircle,
-    color: 'text-green-600'
-  },
-  {
-    title: 'Critical Alerts',
-    value: '3',
-    icon: Shield,
-    color: 'text-red-700'
-  }
-];
+// Alerts are loaded from Firestore and classified into: critical, neutral, basic
 
 const AlertCenter = () => {
   const [selectedTab, setSelectedTab] = useState('all');
 
   const getAlertIcon = (type: string) => {
-    switch (type) {
-      case 'critical':
-        return <AlertTriangle className="h-4 w-4" />;
-      case 'warning':
-        return <Shield className="h-4 w-4" />;
-      case 'info':
-        return <Info className="h-4 w-4" />;
-      default:
-        return <Bell className="h-4 w-4" />;
-    }
+    const t = String(type || '').toLowerCase();
+    if (t === 'critical') return <AlertTriangle className="h-4 w-4" />;
+    if (t === 'neutral' || t === 'warning' || t === 'warn') return <Shield className="h-4 w-4" />;
+    if (t === 'basic' || t === 'info' || t === 'notice') return <Info className="h-4 w-4" />;
+    return <Bell className="h-4 w-4" />;
   };
 
   const getAlertBadge = (type: string) => {
-    switch (type) {
-      case 'critical':
-        return <Badge variant="destructive">Critical</Badge>;
-      case 'warning':
-        return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">Warning</Badge>;
-      case 'info':
-        return <Badge variant="outline" className="text-blue-600 border-blue-600">Info</Badge>;
-      default:
-        return <Badge variant="outline">{type}</Badge>;
-    }
+    const t = String(type || '').toLowerCase();
+    if (t === 'critical') return <Badge variant="destructive">Critical</Badge>;
+    if (t === 'neutral' || t === 'warning' || t === 'warn') return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">Neutral</Badge>;
+    if (t === 'basic' || t === 'info' || t === 'notice') return <Badge variant="outline" className="text-blue-600 border-blue-600">Basic</Badge>;
+    return <Badge variant="outline">{type}</Badge>;
   };
 
   const getStatusBadge = (status: string) => {
@@ -155,11 +59,61 @@ const AlertCenter = () => {
     }
   };
 
-  const filteredAlerts = alerts.filter(alert => {
+  // runtime alerts state
+  const [alertsState, setAlertsState] = useState<any[]>([]);
+  const [statsState, setStatsState] = useState<any[]>([]);
+
+  const classify = (a: any) => {
+    // Normalize existing types to classification categories: critical, neutral, basic
+    const t = String(a?.type || '').toLowerCase();
+    if (t.includes('critical')) return 'critical';
+    if (t.includes('warn') || t.includes('warning')) return 'neutral';
+    if (t.includes('info') || t.includes('notice') || t === '') return 'basic';
+    // fallback based on category or severity
+    const c = String(a?.category || '').toLowerCase();
+    if (c.includes('security') || c.includes('authentication')) return 'critical';
+    return 'basic';
+  };
+
+  useEffect(() => {
+    const q = query(collection(firestore, 'alerts'), orderBy('timestamp', 'desc'));
+    const unsub = onSnapshot(q, (snap) => {
+      const docs = snap.docs.map(d => ({ id: d.id, ...(d.data() as any) }));
+      const mapped = docs.map((d: any) => {
+        const ts = d.timestamp?.toDate ? d.timestamp.toDate() : d.timestamp ? new Date(d.timestamp) : null;
+        const classification = classify(d);
+        return {
+          ...d,
+          timestamp: ts ? ts.toLocaleString() : (d.timestamp || ''),
+          timestampDate: ts,
+          classification,
+        };
+      });
+      setAlertsState(mapped);
+
+      // compute simple stats
+      const total = mapped.length;
+      const active = mapped.filter((m:any) => m.status === 'active').length;
+      const critical = mapped.filter((m:any) => m.classification === 'critical').length;
+      const neutral = mapped.filter((m:any) => m.classification === 'neutral').length;
+      const basic = mapped.filter((m:any) => m.classification === 'basic').length;
+
+      setStatsState([
+        { title: 'Active Alerts', value: String(active), icon: AlertTriangle, color: 'text-red-600' },
+        { title: 'Critical', value: String(critical), icon: Shield, color: 'text-red-700' },
+        { title: 'Neutral', value: String(neutral), icon: Eye, color: 'text-yellow-600' },
+        { title: 'Basic', value: String(basic), icon: Info, color: 'text-blue-600' },
+      ]);
+    }, (e) => console.warn('alerts listener', e));
+
+    return () => unsub();
+  }, []);
+
+  const filteredAlerts = alertsState.filter(alert => {
     if (selectedTab === 'all') return true;
-    if (selectedTab === 'critical') return alert.type === 'critical';
-    if (selectedTab === 'active') return alert.status === 'active';
-    if (selectedTab === 'resolved') return alert.status === 'resolved';
+    if (selectedTab === 'critical') return alert.classification === 'critical';
+    if (selectedTab === 'neutral') return alert.classification === 'neutral';
+    if (selectedTab === 'basic') return alert.classification === 'basic';
     return true;
   });
 
@@ -175,7 +129,7 @@ const AlertCenter = () => {
 
         {/* Statistics Cards */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {stats.map((stat, index) => {
+          {statsState.map((stat, index) => {
             const Icon = stat.icon;
             return (
               <Card key={index}>
@@ -228,8 +182,8 @@ const AlertCenter = () => {
               <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="all">All Alerts</TabsTrigger>
                 <TabsTrigger value="critical">Critical</TabsTrigger>
-                <TabsTrigger value="active">Active</TabsTrigger>
-                <TabsTrigger value="resolved">Resolved</TabsTrigger>
+                <TabsTrigger value="neutral">Neutral</TabsTrigger>
+                <TabsTrigger value="basic">Basic</TabsTrigger>
               </TabsList>
 
               <TabsContent value={selectedTab} className="mt-6">
@@ -240,16 +194,16 @@ const AlertCenter = () => {
                         <div className="flex items-start justify-between">
                           <div className="flex items-start gap-3 flex-1">
                             <div className={`mt-1 ${
-                              alert.type === 'critical' ? 'text-red-600' :
-                              alert.type === 'warning' ? 'text-yellow-600' :
+                              alert.classification === 'critical' ? 'text-red-600' :
+                              alert.classification === 'neutral' ? 'text-yellow-600' :
                               'text-blue-600'
                             }`}>
-                              {getAlertIcon(alert.type)}
+                              {getAlertIcon(alert.classification || alert.type)}
                             </div>
                             <div className="flex-1">
                               <div className="flex items-center gap-2 mb-2">
                                 <h3 className="font-semibold">{alert.title}</h3>
-                                {getAlertBadge(alert.type)}
+                                {getAlertBadge(alert.classification || alert.type)}
                                 {getStatusBadge(alert.status)}
                               </div>
                               <p className="text-muted-foreground text-sm mb-2">
@@ -290,8 +244,8 @@ const AlertCenter = () => {
 
                 {/* Pagination */}
                 <div className="flex items-center justify-between mt-6">
-                  <p className="text-sm text-muted-foreground">
-                    Showing {filteredAlerts.length} of {alerts.length} alerts
+                    <p className="text-sm text-muted-foreground">
+                    Showing {filteredAlerts.length} of {alertsState.length} alerts
                   </p>
                   <div className="flex gap-2">
                     <Button variant="outline" size="sm" disabled>
