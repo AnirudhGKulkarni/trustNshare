@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { getDoc, doc, setDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { getDoc, doc, setDoc, collection, query, where, getDocs, orderBy, startAt, endAt, limit, documentId } from "firebase/firestore";
 import { firestore, auth } from "@/lib/firebase";
 import { GoogleAuthProvider, signInWithPopup, getIdTokenResult } from "firebase/auth";
 
@@ -28,6 +28,8 @@ const Auth: React.FC = () => {
   const [company, setCompany] = useState("");
   const [username, setUsername] = useState("");
   const [usernameStatus, setUsernameStatus] = useState<"idle" | "checking" | "available" | "taken">("idle");
+  const [usernameError, setUsernameError] = useState<string | null>(null);
+  const [usernameSuggestions, setUsernameSuggestions] = useState<string[]>([]);
   const [domain, setDomain] = useState<string>("");
   const [customCategory, setCustomCategory] = useState("");
   const [role, setRole] = useState<"admin" | "client">("client");
@@ -45,69 +47,19 @@ const Auth: React.FC = () => {
     {
       title: "Secure vault",
       svg: (
-        <svg viewBox="0 0 200 200" className="w-full h-auto" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Secure vault illustration">
-          <defs>
-            <linearGradient id="g1a" x1="0" x2="1">
-              <stop offset="0%" stopColor="#e6f0ff" />
-              <stop offset="100%" stopColor="#eaf6ff" />
-            </linearGradient>
-          </defs>
-          <rect x="0" y="0" width="200" height="200" rx="12" fill="url(#g1a)" />
-          <g transform="translate(40 35)">
-            <rect x="0" y="10" width="120" height="90" rx="14" fill="#dff0ff" />
-            <rect x="8" y="18" width="104" height="74" rx="10" fill="#fff" />
-            <circle cx="84" cy="56" r="18" fill="#e6f2ff" />
-            <circle cx="84" cy="56" r="10" fill="#2b6ef6" />
-            <g transform="translate(80 52)" fill="#fff">
-              <rect x="-1" y="-1" width="2" height="12" rx="1" />
-              <rect x="6" y="-1" width="2" height="12" rx="1" transform="rotate(60)" />
-              <rect x="-7" y="-1" width="2" height="12" rx="1" transform="rotate(-60)" />
-            </g>
-            <rect x="20" y="30" width="60" height="8" rx="4" fill="#f3f7ff" />
-            <rect x="20" y="44" width="36" height="8" rx="4" fill="#f3f7ff" />
-          </g>
-        </svg>
+        <img src="/1.jpg" alt="Secure vault" className="w-full h-auto object-cover" />
       ),
     },
     {
       title: "Encrypted sharing",
       svg: (
-        <svg viewBox="0 0 200 200" className="w-full h-auto" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Encrypted sharing illustration">
-          <defs>
-            <linearGradient id="g2a" x1="0" x2="1">
-              <stop offset="0%" stopColor="#fff7e6" />
-              <stop offset="100%" stopColor="#eef9f7" />
-            </linearGradient>
-          </defs>
-          <rect x="0" y="0" width="200" height="200" rx="12" fill="url(#g2a)" />
-          <g transform="translate(30 30)">
-            <rect x="10" y="20" width="120" height="80" rx="10" fill="#fff" stroke="#e6eefb" />
-            <path d="M40 60h40v10H40z" fill="#2b6ef6" />
-            <circle cx="100" cy="40" r="18" fill="#f3f7ff" stroke="#cfe6ff" />
-            <path d="M96 36h8v8h-8z" fill="#2b6ef6" />
-          </g>
-        </svg>
+        <img src="/2.jpg" alt="Encrypted sharing" className="w-full h-auto object-cover" />
       ),
     },
     {
       title: "Audit & control",
       svg: (
-        <svg viewBox="0 0 200 200" className="w-full h-auto" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Audit illustration">
-          <defs>
-            <linearGradient id="g3a" x1="0" x2="1">
-              <stop offset="0%" stopColor="#eef7ff" />
-              <stop offset="100%" stopColor="#f2fbf9" />
-            </linearGradient>
-          </defs>
-          <rect x="0" y="0" width="200" height="200" rx="12" fill="url(#g3a)" />
-          <g transform="translate(30 30)">
-            <rect x="6" y="10" width="120" height="80" rx="8" fill="#fff" stroke="#e6eefb" />
-            <rect x="16" y="22" width="36" height="8" rx="4" fill="#2b6ef6" />
-            <rect x="16" y="34" width="84" height="8" rx="4" fill="#f3f7ff" />
-            <circle cx="110" cy="60" r="14" fill="#fff" stroke="#cfe6ff" />
-            <path d="M106 56h8v8h-8z" fill="#2b6ef6" />
-          </g>
-        </svg>
+        <img src="/3.jpg" alt="Audit and control" className="w-full h-auto object-cover" />
       ),
     },
   ];
@@ -119,29 +71,113 @@ const Auth: React.FC = () => {
     return () => clearInterval(t);
   }, []);
 
-  // Real-time username availability check with debounce and race protection
+  // Real-time username availability check with debounce, race protection, and minimum 3-character rule
   useEffect(() => {
-    const uname = username.trim().toLowerCase();
-    if (!uname) {
+    const raw = username.trim();
+    const uname = raw.toLowerCase();
+
+    // Enforce at least 3 characters in username
+    if (!uname || uname.length < 3) {
       setUsernameStatus("idle");
+      setUsernameError(null);
+      setUsernameSuggestions([]);
       return;
     }
+
     setUsernameStatus("checking");
+    setUsernameError(null);
+    setUsernameSuggestions([]);
     const timer = setTimeout(() => {
       const thisRequest = ++usernameCheckRef.current;
       (async () => {
         try {
-          const snap = await getDoc(doc(firestore, "usernames", uname));
-          // Ignore if a newer request was started
+          // First do an exact lookup by document id to reliably determine availability.
+          const exactSnap = await getDoc(doc(firestore, "usernames", uname));
           if (thisRequest !== usernameCheckRef.current) return;
-          setUsernameStatus(snap.exists() ? "taken" : "available");
+          let exact = exactSnap.exists();
+
+          // Also check the `users` collection for an exact username match and
+          // treat that as authoritative (username taken) if found. This is
+          // wrapped in try/catch because `users` may be protected by rules.
+          try {
+            if (!exact) {
+              const uqExact = query(
+                collection(firestore, "users"),
+                where("username", "==", uname),
+                limit(1)
+              );
+              const usnapExact = await getDocs(uqExact);
+              if (thisRequest !== usernameCheckRef.current) return;
+              if (!usnapExact.empty) {
+                exact = true;
+              }
+            }
+          } catch (userExactErr) {
+            // Permission errors are expected in some rule setups; log and continue
+            console.warn("Users exact-match lookup failed:", userExactErr);
+          }
+
+          setUsernameStatus(exact ? "taken" : "available");
+          setUsernameError(null);
+
+          // Also fetch a few prefix suggestions (exclude exact match)
+          try {
+            const q = query(
+              collection(firestore, "usernames"),
+              orderBy(documentId()),
+              startAt(uname),
+              endAt(uname + "\uf8ff"),
+              limit(6)
+            );
+            const snap = await getDocs(q);
+            if (thisRequest !== usernameCheckRef.current) return;
+            const found = snap.docs.map((d) => d.id).filter((n) => n !== uname);
+            // Keep these username doc ids as suggestions initially
+            let suggestions = found.slice(0, 5);
+
+            // Also try to query the `users` collection for matching `username` fields
+            // to catch cases where usernames are stored only on user profiles.
+            try {
+              const uq = query(
+                collection(firestore, "users"),
+                orderBy("username"),
+                startAt(uname),
+                endAt(uname + "\uf8ff"),
+                limit(6)
+              );
+              const usnap = await getDocs(uq);
+              if (thisRequest !== usernameCheckRef.current) return;
+              const usersFound = usnap.docs.map((d) => (d.data() as any)?.username).filter(Boolean) as string[];
+              // If any exact match in users, treat as taken
+              const usersExact = usersFound.includes(uname);
+              if (usersExact) {
+                // ensure status reflects that (will be set below after merging)
+              }
+
+              // Merge suggestions, preserving order and uniqueness
+              const merged = Array.from(new Set([...suggestions, ...usersFound])).filter((s) => s !== uname).slice(0, 5);
+              suggestions = merged;
+            } catch (usersErr) {
+              // Likely permission-denied for unauthenticated checks; log and continue using `usernames` results
+              console.warn("Users collection lookup failed:", usersErr);
+            }
+
+            setUsernameSuggestions(suggestions);
+          } catch (suggErr) {
+            console.warn("Username suggestions fetch failed:", suggErr);
+            if (thisRequest !== usernameCheckRef.current) return;
+            setUsernameSuggestions([]);
+          }
         } catch (err) {
           console.warn("Username check failed:", err);
           if (thisRequest !== usernameCheckRef.current) return;
+          // Surface a friendly error so users know availability couldn't be verified
           setUsernameStatus("idle");
+          setUsernameSuggestions([]);
+          setUsernameError("Could not verify username availability. Please try again later.");
         }
       })();
-    }, 500);
+    }, 300);
     return () => clearTimeout(timer);
   }, [username]);
 
@@ -580,10 +616,17 @@ const Auth: React.FC = () => {
                     <div className="relative">
                       <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                       <Input
-                        className="pl-10 bg-gray-900 border border-gray-700 text-gray-100 placeholder-gray-500"
+                        className={`pl-10 bg-gray-900 border text-gray-100 placeholder-gray-500 ${usernameStatus === 'available' ? 'border-green-400' : usernameStatus === 'taken' ? 'border-red-500' : 'border-gray-700'}`}
                         value={username}
-                        onChange={(e) => setUsername(e.target.value)}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          setUsername(v);
+                          const raw = v.trim().toLowerCase();
+                          if (!raw || raw.length < 3) setUsernameStatus('idle');
+                          else setUsernameStatus('checking');
+                        }}
                         placeholder="Choose a unique username"
+                        aria-invalid={usernameStatus === 'taken'}
                         required
                       />
                     </div>
@@ -594,10 +637,29 @@ const Auth: React.FC = () => {
                       <p className="mt-1 text-xs text-green-400">✓ Username is available</p>
                     )}
                     {usernameStatus === "taken" && (
-                      <p className="mt-1 text-xs text-red-400">✗ Username already taken</p>
+                      <>
+                        <p className="mt-1 text-xs text-red-400">✗ Username already taken</p>
+                        {usernameSuggestions.length > 0 && (
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            Suggestions: {usernameSuggestions.map((s, i) => (
+                              <button
+                                key={s}
+                                type="button"
+                                onClick={() => { setUsername(s); setUsernameStatus('checking'); }}
+                                className="underline ml-1 text-sm text-primary hover:text-primary/80"
+                              >
+                                {s}{i < usernameSuggestions.length - 1 ? ',' : ''}
+                              </button>
+                            ))}
+                          </p>
+                        )}
+                      </>
                     )}
                     {usernameStatus === "idle" && (
-                      <p className="mt-1 text-xs text-muted-foreground">Your username will be used for admin verification.</p>
+                      <p className="mt-1 text-xs text-muted-foreground">Username must contain at least 3 characters.</p>
+                    )}
+                    {usernameError && (
+                      <p className="mt-1 text-xs text-yellow-400">{usernameError}</p>
                     )}
                   </div>
 
@@ -675,7 +737,7 @@ const Auth: React.FC = () => {
                     </div>
                   </div>
 
-                  <Button type="submit" disabled={isLoading} className="w-full bg-gradient-to-r from-primary to-accent-foreground hover:opacity-90 transition-opacity shadow-md">
+                  <Button type="submit" disabled={isLoading || usernameStatus !== 'available'} className="w-full bg-gradient-to-r from-primary to-accent-foreground hover:opacity-90 transition-opacity shadow-md">
                     {isLoading ? "Creating account..." : "Sign Up"}
                   </Button>
 

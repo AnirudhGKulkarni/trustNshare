@@ -29,11 +29,11 @@ const navigation = [
 export const Sidebar = () => {
   return (
     <aside className="hidden lg:flex lg:flex-col w-64 bg-card border-r border-border">
-      <div className="flex h-16 items-center px-6 border-b border-border">
-        <Shield className="h-6 w-6 text-primary mr-2" />
-        <span className="text-lg font-semibold bg-gradient-to-r from-primary to-accent-foreground bg-clip-text text-transparent">
-          trustNshare
-        </span>
+      <div className="flex h-20 items-center px-0 border-b border-border">
+        <div className="w-full h-20 overflow-hidden">
+          <img src="/trustNshare.jpg" alt="trustNshare" className="w-full h-20 object-cover block dark:hidden" />
+          <img src="/bg.png" alt="trustNshare dark" className="w-full h-20 object-cover hidden dark:block" />
+        </div>
       </div>
       
       <nav className="flex-1 space-y-1 px-3 py-4">

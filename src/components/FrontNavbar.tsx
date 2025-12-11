@@ -83,15 +83,11 @@ const FrontNavbar: React.FC<FrontNavbarProps> = ({ isDarkMode = false, onThemeTo
           
           {/* Logo with smooth entrance */}
           <div className="flex items-center gap-3 flex-shrink-0 animate-fade-in">
-            <div className={`p-2 rounded-lg transition-all duration-300 ${
-              isDarkMode ? "bg-blue-600/20 hover:bg-blue-600/30" : "bg-blue-50 hover:bg-blue-100"
-            }`}>
-              <img src="/favicon.ico" alt="trustNshare" className="w-6 h-6" />
-            </div>
-            <Link to="/" className={`text-xl font-bold transition-colors duration-300 ${
-              isDarkMode ? "text-white hover:text-blue-400" : "text-gray-900 hover:text-blue-600"
-            }`}>
-              trustNshare
+            <Link to="/" className="block">
+              <div className="h-12 md:h-16 overflow-hidden">
+                <img src="/trustNshare.jpg" alt="trustNshare" className="h-12 md:h-16 object-contain block dark:hidden" />
+                <img src="/bg.png" alt="trustNshare dark" className="h-12 md:h-16 object-contain hidden dark:block" />
+              </div>
             </Link>
           </div>
 

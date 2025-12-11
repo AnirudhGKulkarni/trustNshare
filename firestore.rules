@@ -119,6 +119,23 @@ service cloud.firestore {
       allow delete: if isSuperAdmin();
     }
 
+    // Usernames collection - allow public read for signup availability checks
+    // and controlled writes so clients can reserve a username on signup.
+    match /usernames/{username} {
+      // Allow anyone (including unauthenticated) to check availability and
+      // request prefix queries for suggestions. Usernames are intentionally
+      // treated as public identifiers.
+      allow get, list: if true;
+
+      // Creation of a username document may only be performed by an
+      // authenticated user and the `uid` field must match their auth uid.
+      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
+
+      // Only super admin may update or delete username mappings
+      // to prevent malicious renames or removals.
+      allow update, delete: if isSuperAdmin();
+    }
+
     // Fallback: deny everything else
     match /{document=**} {
       allow read, write: if false;

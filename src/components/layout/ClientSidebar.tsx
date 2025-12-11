@@ -106,15 +106,10 @@ export const ClientSidebar = () => {
 
   return (
     <aside className="hidden lg:flex lg:flex-col w-64 bg-gradient-to-b from-card to-secondary/20 border-r border-border">
-      <div className="flex h-16 items-center px-6 border-b border-border bg-card">
-        <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-            <FolderOpen className="h-4 w-4 text-white" />
-          </div>
-          <div className="flex flex-col">
-            <span className="text-sm font-bold">trustNshare</span>
-            <span className="text-[10px] text-muted-foreground">Client Portal</span>
-          </div>
+      <div className="flex h-20 items-center px-0 border-b border-border bg-card">
+        <div className="w-full h-20 overflow-hidden">
+          <img src="/trustNshare.jpg" alt="trustNshare" className="w-full h-20 object-cover block dark:hidden" />
+          <img src="/bg.png" alt="trustNshare dark" className="w-full h-20 object-cover hidden dark:block" />
         </div>
       </div>
       
