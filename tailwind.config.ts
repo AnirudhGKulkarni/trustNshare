@@ -13,6 +13,14 @@ export default {
       },
     },
     extend: {
+      screens: {
+        // extra small devices (phones)
+        xs: '480px',
+        // very large displays / TVs
+        tv: '1600px',
+        // ultra-wide / very large workstations
+        ultra: '2200px',
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 import { Sidebar } from './Sidebar';
 import { SuperAdminSidebar } from './SuperAdminSidebar';
 import { Navbar } from './Navbar';
@@ -12,12 +12,17 @@ interface DashboardLayoutProps {
 export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const { profile } = useAuth();
   const isSuperAdmin = profile?.role === 'super_admin';
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
     <div className="flex min-h-screen w-full bg-background">
-      {isSuperAdmin ? <SuperAdminSidebar /> : <Sidebar />}
+      {isSuperAdmin ? (
+        <SuperAdminSidebar mobileOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      ) : (
+        <Sidebar mobileOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      )}
       <div className="flex flex-1 flex-col">
-        <Navbar />
+        <Navbar onToggleSidebar={() => setSidebarOpen((s) => !s)} />
         <main className="flex-1 p-6 lg:p-8">
           {children}
         </main>

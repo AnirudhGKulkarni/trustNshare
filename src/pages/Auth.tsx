@@ -474,6 +474,12 @@ const Auth: React.FC = () => {
 
   return (
     <div className="relative flex min-h-screen w-screen items-stretch bg-gradient-to-br from-gray-950 via-gray-900 to-gray-800 text-gray-100">
+      {/* SVG sharpen filter for carousel images */}
+      <svg style={{ position: "absolute", width: 0, height: 0 }} aria-hidden="true">
+        <filter id="sharpen" x="0" y="0" width="100%" height="100%">
+          <feConvolveMatrix order="3" kernelMatrix="-1 -1 -1 -1 10 -1 -1 -1 -1" divisor="1" />
+        </filter>
+      </svg>
       {/* Back to Home */}
       <Link to="/" className="absolute top-4 left-4 z-50 inline-flex items-center gap-2 rounded-lg border border-gray-700 bg-gray-900/70 px-3 py-2 text-sm hover:bg-gray-800 hover:border-blue-500 transition-colors">
         <ArrowLeft className="w-4 h-4" />
@@ -481,7 +487,7 @@ const Auth: React.FC = () => {
       </Link>
 
       <Card className="w-full max-w-none min-h-screen md:rounded-xl md:shadow-elevated rounded-none shadow-none bg-gray-900 text-gray-100 border border-gray-800">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-0 h-full">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 h-full">
           <div className="p-6 md:p-10 flex flex-col justify-center items-center">
             <div className="w-full max-w-md">
             <CardHeader className="space-y-4 text-center">
@@ -491,24 +497,19 @@ const Auth: React.FC = () => {
                 </div>
                 <div className="text-lg font-semibold">trustNshare</div>
               </div>
-
               <div className="pt-2">
                 <div className="flex items-center justify-center gap-2 rounded-full bg-gray-800/80 border border-gray-700 p-1 w-max mx-auto">
                   <button
                     type="button"
                     onClick={() => { setMode('signin'); setShowWelcomeBack(false); }}
-                    className={`px-4 py-1 text-sm rounded-full transition-colors ${
-                      mode === 'signin' ? 'bg-gray-900 text-gray-100 border border-blue-500/40 shadow-sm' : 'text-gray-300 hover:bg-gray-800'
-                    }`}
+                    className={`px-4 py-1 text-sm rounded-full transition-colors ${mode === 'signin' ? 'bg-gray-900 text-gray-100 border border-blue-500/40 shadow-sm' : 'text-gray-300 hover:bg-gray-800'}`}
                   >
                     Login
                   </button>
                   <button
                     type="button"
                     onClick={() => setMode('signup')}
-                    className={`px-4 py-1 text-sm rounded-full transition-colors ${
-                      mode === 'signup' ? 'bg-gray-900 text-gray-100 border border-blue-500/40 shadow-sm' : 'text-gray-300 hover:bg-gray-800'
-                    }`}
+                    className={`px-4 py-1 text-sm rounded-full transition-colors ${mode === 'signup' ? 'bg-gray-900 text-gray-100 border border-blue-500/40 shadow-sm' : 'text-gray-300 hover:bg-gray-800'}`}
                   >
                     Signup
                   </button>
@@ -770,7 +771,7 @@ const Auth: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800 p-6 md:sticky md:top-0 md:h-screen">
+          <div className="hidden lg:flex items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800 p-6 lg:sticky lg:top-0 lg:h-screen">
             <div className="p-4 md:p-8 w-full flex items-center justify-center h-full">
               <div className="bg-gray-900 border border-gray-800 rounded-xl shadow-lg p-6 flex items-center justify-center w-full h-full max-w-5xl">
                 <div className="w-full h-full flex items-center justify-center relative">
@@ -785,23 +786,7 @@ const Auth: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10">
-                    <button onClick={() => setCurrent((c) => (c - 1 + carouselItems.length) % carouselItems.length)} className="bg-gray-800 text-gray-100 rounded-full p-3 shadow border border-gray-700 hover:border-blue-500">
-                      ‹
-                    </button>
-                  </div>
-
-                  <div className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10">
-                    <button onClick={() => setCurrent((c) => (c + 1) % carouselItems.length)} className="bg-gray-800 text-gray-100 rounded-full p-3 shadow border border-gray-700 hover:border-blue-500">
-                      ›
-                    </button>
-                  </div>
-
-                  <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex gap-3 z-10">
-                    {carouselItems.map((_, i) => (
-                      <button key={i} onClick={() => setCurrent(i)} className={`w-3 h-3 rounded-full ${i === current ? 'bg-blue-500' : 'bg-gray-700'}`} />
-                    ))}
-                  </div>
+                  {/* Manual navigation buttons and dot indicators removed per design request */}
                 </div>
               </div>
             </div>

@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-export const Navbar = () => {
+export const Navbar = ({ onToggleSidebar }: { onToggleSidebar?: () => void }) => {
   const { currentUser, profile, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -46,6 +46,11 @@ export const Navbar = () => {
   return (
     <header className="flex h-16 items-center justify-between border-b border-border bg-card px-6">
       <div className="flex items-center gap-4">
+        <button onClick={onToggleSidebar} className="lg:hidden p-2 rounded-md hover:bg-border">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M3 5h14a1 1 0 010 2H3a1 1 0 110-2zm0 4h14a1 1 0 010 2H3a1 1 0 110-2zm0 4h14a1 1 0 010 2H3a1 1 0 110-2z" clipRule="evenodd" />
+          </svg>
+        </button>
         {profile && ["super_admin", "admin", "client"].includes(profile.role) ? (
           <div className="flex flex-col">
             <h1 className="text-xl font-semibold text-foreground">trustNshare</h1>

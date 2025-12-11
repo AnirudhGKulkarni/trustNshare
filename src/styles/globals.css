@@ -106,6 +106,29 @@ body {
               color var(--transition-base);
 }
 
+/* Fluid (responsive) base typography for different screen sizes */
+html {
+  /* scale between 14px on small screens and 18px on very large screens */
+  font-size: clamp(14px, 1.2vw + 12px, 18px);
+}
+
+/* Make images responsive by default */
+img,
+picture,
+video {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Utility to help scale complex layout elements on very large screens */
+.container-fluid {
+  width: 100%;
+  max-width: 100%;
+  padding-left: var(--spacing-md);
+  padding-right: var(--spacing-md);
+}
+
 /* ===================================
    ANIMATIONS
    =================================== */

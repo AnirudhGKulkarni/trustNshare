@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { 
   ChevronLeft, ChevronRight, Shield, Lock, Users, Eye, CheckCircle, 
   Zap, Globe, BarChart3, FileText, Award, Star
@@ -165,6 +165,91 @@ const FrontPage: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Video availability & small-screen detection for fallback
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [videoPlayable, setVideoPlayable] = useState(false);
+  const [isSmallScreen, setIsSmallScreen] = useState(false);
+  const [videoAspect, setVideoAspect] = useState<number | null>(null);
+  const [heroHeight, setHeroHeight] = useState<number | null>(null);
+
+  // compute hero height given video aspect and viewport; extracted so we can call it from multiple places
+  const computeHeroHeight = (aspect?: number | null) => {
+    try {
+      const a = aspect ?? videoAspect;
+      if (!a || Number.isNaN(a) || a <= 0) return;
+      const vw = window.innerWidth || 1024;
+      const vh = window.innerHeight || 800;
+      const small = window.matchMedia('(max-width: 1023px)').matches;
+      if (small) {
+        const minH = 220;
+        const maxH = Math.max(320, Math.floor(vh * 0.6));
+        const desired = Math.min(Math.max(Math.floor(vh * 0.45), minH), maxH);
+        setHeroHeight(desired);
+        return;
+      }
+      const base = vw / a;
+      const desired = Math.min(Math.max(base, 360), Math.min(900, Math.floor(vh * 0.7)));
+      setHeroHeight(desired);
+    } catch (e) {
+      // ignore
+    }
+  };
+
+  useEffect(() => {
+    const check = () => setIsSmallScreen(window.matchMedia('(max-width: 1023px)').matches);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!el) return;
+    const onLoadedMeta = () => {
+      try {
+        const w = (el as HTMLVideoElement).videoWidth;
+        const h = (el as HTMLVideoElement).videoHeight;
+        if (w && h) {
+          const aspect = w / h;
+          setVideoAspect(aspect);
+          // compute hero height using helper
+          computeHeroHeight(aspect);
+          const onResize = () => computeHeroHeight(aspect);
+          window.addEventListener('resize', onResize);
+          // cleanup the resize listener when video element unmounts
+          const cleanupResize = () => window.removeEventListener('resize', onResize);
+          (el as any).__cleanupResize = cleanupResize;
+        }
+      } catch (e) {
+        // ignore
+      }
+    };
+    el.addEventListener('loadedmetadata', onLoadedMeta);
+    const onCan = () => setVideoPlayable(true);
+    const onErr = () => setVideoPlayable(false);
+    el.addEventListener('canplay', onCan);
+    el.addEventListener('error', onErr);
+    // if already ready
+    if (el.readyState >= 3) setVideoPlayable(true);
+    return () => {
+      el.removeEventListener('canplay', onCan);
+      el.removeEventListener('error', onErr);
+      el.removeEventListener('loadedmetadata', onLoadedMeta);
+      // remove any resize listener attached earlier
+      try {
+        const cleanup = (el as any).__cleanupResize;
+        if (typeof cleanup === 'function') cleanup();
+      } catch (e) {
+        // ignore
+      }
+    };
+  }, [videoRef.current]);
+
+  // also attempt to compute height when videoPlayable or videoAspect changes
+  useEffect(() => {
+    if (videoAspect) computeHeroHeight(videoAspect);
+  }, [videoAspect, videoPlayable]);
+
   const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % carouselItems.length);
   const prevSlide = () => setCurrentSlide((prev) => (prev - 1 + carouselItems.length) % carouselItems.length);
 
@@ -177,51 +262,61 @@ const FrontPage: React.FC = () => {
       <FrontNavbar isDarkMode={isDarkMode} />
 
       {/* Hero Section with CTA */}
-      <section className={`relative w-full py-20 px-6 ${isDarkMode ? "bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900" : "bg-gradient-to-br from-blue-600 via-blue-700 to-purple-700"} text-white overflow-hidden`}>
-        <div className="absolute inset-0 opacity-10 pointer-events-none">
+      <section
+        className={`relative w-full py-12 md:py-20 px-6 text-white overflow-hidden`}
+        style={
+          heroHeight
+            ? { height: `${heroHeight}px` }
+            : { minHeight: isSmallScreen ? '45vh' : 360 }
+        }
+      >
+        {/* Background video for the hero (blurred, non-interactive) - shown on all screen sizes */}
+        <video
+          ref={videoRef}
+          className={`absolute inset-0 w-full h-full object-cover object-center z-0 filter ${isSmallScreen ? 'blur-none brightness-95' : 'blur-sm brightness-95'}`}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
+          src={isSmallScreen ? "/mobilevideo.mp4" : "/logovideo.mp4"}
+          poster="/bg.png"
+          aria-hidden="true"
+          style={{ pointerEvents: 'none', objectPosition: 'center center' as any }}
+        />
+
+        {/* Gradient overlay above the video to preserve contrast */}
+        <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-br from-gray-900/40 via-gray-800/22 to-gray-900/40" />
+
+        <div className="absolute inset-0 opacity-10 pointer-events-none z-10">
           <div className="absolute top-20 left-10 w-72 h-72 bg-white rounded-full mix-blend-multiply filter blur-3xl animate-pulse"></div>
           <div className="absolute -bottom-8 right-10 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl animate-pulse" style={{animationDelay: '1s'}}></div>
         </div>
         
-        <div className="max-w-7xl mx-auto relative z-10">
+        <div className="max-w-7xl mx-auto relative z-20">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             <div className="animate-fade-in">
-              <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">
+              <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
                 Secure File Sharing for Modern Businesses
               </h1>
-              <p className="text-xl opacity-90 mb-8 animate-fade-in">
+              <p className="text-lg md:text-xl opacity-90 mb-8 animate-fade-in">
                 Protect your sensitive data with military-grade encryption, granular access controls, and complete audit visibility.
               </p>
         
             </div>
-            <div className="hidden md:block animate-scale-in">
-              <div className={`${isDarkMode ? "bg-gray-700/50 border-gray-600" : "bg-white/10 border-white/30"} backdrop-blur-md rounded-2xl p-8 border shadow-2xl transition-all duration-300 hover:shadow-3xl hover:scale-105`}>
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <CheckCircle className="w-6 h-6 text-green-400 flex-shrink-0" />
-                    <span className="text-lg">256-bit AES encryption</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <CheckCircle className="w-6 h-6 text-green-400 flex-shrink-0" />
-                    <span className="text-lg">Real-time access control</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <CheckCircle className="w-6 h-6 text-green-400 flex-shrink-0" />
-                    <span className="text-lg">Complete audit trails</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <CheckCircle className="w-6 h-6 text-green-400 flex-shrink-0" />
-                    <span className="text-lg">GDPR & HIPAA compliant</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+            {/* Right-side feature box removed per request */}
           </div>
         </div>
       </section>
 
-      {/* Hero Carousel Section */}
-      <section className={`relative w-full h-96 overflow-hidden ${isDarkMode ? "bg-gray-800" : "bg-gradient-to-r from-blue-50 to-purple-50"}`}>
+      {/* Hero Carousel */}
+      <div className="relative">
+        <div className="absolute inset-0 -z-20" />
+        {/* subtle overlay to ensure text contrast */}
+        <div className="absolute inset-0 bg-black/30 -z-10 pointer-events-none" />
+
+        {/* Hero Carousel Section */}
+        <section className={`relative w-full h-96 overflow-hidden ${isDarkMode ? "bg-gray-800/30" : "bg-gradient-to-r from-blue-50/30 to-purple-50/30"}`}>
         <div className="relative w-full h-full flex items-center justify-center">
           {/* Carousel Content with Animation */}
           <div className="text-center text-white z-10 px-6 animate-scale-in" key={`carousel-${currentSlide}`}>
@@ -268,7 +363,7 @@ const FrontPage: React.FC = () => {
       </section>
 
       {/* Statistics Section */}
-      <section id="stats" className={`py-16 px-6 ${isDarkMode ? "bg-gray-800" : "bg-gray-50"}`}>
+      <section id="stats" className={`py-16 px-6 ${isDarkMode ? "bg-gray-800/30" : "bg-gray-50/30"}`}>
         <div className="max-w-7xl mx-auto">
           <h2 className={`text-3xl font-bold mb-12 text-center animate-fade-in ${isDarkMode ? "text-white" : "text-gray-900"}`}>Current Cyber Threats</h2>
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
@@ -291,6 +386,7 @@ const FrontPage: React.FC = () => {
           </div>
         </div>
       </section>
+    </div>
 
       {/* Services Section - Enhanced */}
       <section id="services" className={`py-20 px-6 ${bgClass}`}>

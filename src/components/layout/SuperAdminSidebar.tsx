@@ -15,9 +15,9 @@ const navigation = [
   { name: 'All Users', href: '/super-admin/users', icon: Users },
 ];
 
-export const SuperAdminSidebar = () => {
-  return (
-    <aside className="hidden lg:flex lg:flex-col w-64 bg-card border-r border-border">
+export const SuperAdminSidebar = ({ mobileOpen = false, onClose }: { mobileOpen?: boolean; onClose?: () => void }) => {
+  const panel = (
+    <div className="flex flex-col w-64 h-full bg-card border-r border-border">
       <div className="flex h-20 items-center px-0 border-b border-border">
         <div className="w-full h-20 overflow-hidden">
           <img src="/trustNshare.jpg" alt="trustNshare" className="w-full h-20 object-cover block dark:hidden" />
@@ -34,9 +34,7 @@ export const SuperAdminSidebar = () => {
             className={({ isActive }) =>
               cn(
                 'flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200',
-                isActive
-                  ? 'bg-primary text-primary-foreground shadow-sm'
-                  : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
+                isActive ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
               )
             }
           >
@@ -52,6 +50,23 @@ export const SuperAdminSidebar = () => {
           <p className="text-xs text-muted-foreground mt-1">Full system access</p>
         </div>
       </div>
-    </aside>
+    </div>
+  );
+
+  return (
+    <>
+      <div className={`fixed inset-0 z-40 lg:hidden ${mobileOpen ? '' : 'pointer-events-none'}`} aria-hidden={!mobileOpen}>
+        <div
+          className={`fixed inset-0 bg-black transition-opacity ${mobileOpen ? 'opacity-60' : 'opacity-0'}`}
+          onClick={onClose}
+        />
+
+        <div className={`fixed left-0 top-0 bottom-0 w-64 transform transition-transform ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+          {panel}
+        </div>
+      </div>
+
+      <aside className="hidden lg:flex lg:flex-col w-64">{panel}</aside>
+    </>
   );
 };

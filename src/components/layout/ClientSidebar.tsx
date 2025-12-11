@@ -49,7 +49,7 @@ const getRelativeTime = (ts: any): string => {
   }
 };
 
-export const ClientSidebar = () => {
+export const ClientSidebar = ({ mobileOpen = false, onClose }: { mobileOpen?: boolean; onClose?: () => void }) => {
   const { currentUser } = useAuth();
   const activityRef = useRef<HTMLDivElement | null>(null);
   const [canScrollRight, setCanScrollRight] = useState(false);
@@ -104,8 +104,8 @@ export const ClientSidebar = () => {
     };
   }, [recentActivities]);
 
-  return (
-    <aside className="hidden lg:flex lg:flex-col w-64 bg-gradient-to-b from-card to-secondary/20 border-r border-border">
+  const panel = (
+    <div className="flex flex-col w-64 bg-white dark:bg-card border-r border-border h-full">
       <div className="flex h-20 items-center px-0 border-b border-border bg-card">
         <div className="w-full h-20 overflow-hidden">
           <img src="/trustNshare.jpg" alt="trustNshare" className="w-full h-20 object-cover block dark:hidden" />
@@ -196,6 +196,25 @@ export const ClientSidebar = () => {
           )}
         </div>
       </div>
-    </aside>
+    </div>
+  );
+
+  return (
+    <>
+      {/* Mobile drawer */}
+      <div className={`fixed inset-0 z-40 lg:hidden ${mobileOpen ? '' : 'pointer-events-none'}`} aria-hidden={!mobileOpen}>
+        <div
+          className={`fixed inset-0 bg-black transition-opacity ${mobileOpen ? 'opacity-60' : 'opacity-0'}`}
+          onClick={onClose}
+        />
+
+        <div className={`fixed left-0 top-0 bottom-0 w-64 transform transition-transform ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+          {panel}
+        </div>
+      </div>
+
+      {/* Desktop sidebar */}
+      <aside className="hidden lg:flex lg:flex-col w-64">{panel}</aside>
+    </>
   );
 };
