@@ -78,22 +78,43 @@ const AdminSignup: React.FC = () => {
       return;
     }
 
-    // Validate and verify registered username exists in Firestore
+    // Validate and verify registered username exists in Firestore.
+    // If the `usernames` collection is not readable due to rules or eventual consistency,
+    // fall back to checking the signed-in user's `users/{uid}` profile for the username.
     const uname = username.trim().toLowerCase();
     if (!uname) {
       toast.error("Please enter your registered username");
       return;
     }
-    // No strict format rules for admin username; only require non-empty and existence
+
+    let verified = false;
     try {
       const unameSnap = await getDoc(doc(firestore, "usernames", uname));
-      if (!unameSnap.exists()) {
-        toast.error("Username not found. Please use the username you registered during signup.");
-        return;
+      if (unameSnap.exists()) {
+        verified = true;
       }
     } catch (checkErr) {
-      console.warn("Username verification failed:", checkErr);
-      toast.error("Could not verify username. Please try again.");
+      console.warn("Username verification (primary) failed:", checkErr);
+      // Do not return immediately — we'll attempt a fallback below.
+    }
+
+    // Fallback: if the user is signed in, check their users/{uid} doc for the username.
+    if (!verified && currentUser) {
+      try {
+        const uSnap = await fgetDoc(fdoc(firestore, "users", currentUser.uid));
+        if (uSnap.exists()) {
+          const u: any = uSnap.data();
+          if ((u.username ?? "").toLowerCase() === uname) {
+            verified = true;
+          }
+        }
+      } catch (fbErr) {
+        console.warn("Username verification (fallback) failed:", fbErr);
+      }
+    }
+
+    if (!verified) {
+      toast.error("Could not verify username. If you just signed up, please wait a moment and try again. If the problem persists, contact support.");
       return;
     }
 

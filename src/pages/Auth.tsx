@@ -38,6 +38,7 @@ const Auth: React.FC = () => {
   const { login, signup } = useAuth();
   const navigate = useNavigate();
   const googleInProgressRef = useRef(false);
+  const usernameCheckRef = useRef(0);
 
   // Carousel items for right-hand illustration
   const carouselItems = [
@@ -118,7 +119,7 @@ const Auth: React.FC = () => {
     return () => clearInterval(t);
   }, []);
 
-  // Real-time username availability check with debounce
+  // Real-time username availability check with debounce and race protection
   useEffect(() => {
     const uname = username.trim().toLowerCase();
     if (!uname) {
@@ -126,14 +127,20 @@ const Auth: React.FC = () => {
       return;
     }
     setUsernameStatus("checking");
-    const timer = setTimeout(async () => {
-      try {
-        const snap = await getDoc(doc(firestore, "usernames", uname));
-        setUsernameStatus(snap.exists() ? "taken" : "available");
-      } catch (err) {
-        console.warn("Username check failed:", err);
-        setUsernameStatus("idle");
-      }
+    const timer = setTimeout(() => {
+      const thisRequest = ++usernameCheckRef.current;
+      (async () => {
+        try {
+          const snap = await getDoc(doc(firestore, "usernames", uname));
+          // Ignore if a newer request was started
+          if (thisRequest !== usernameCheckRef.current) return;
+          setUsernameStatus(snap.exists() ? "taken" : "available");
+        } catch (err) {
+          console.warn("Username check failed:", err);
+          if (thisRequest !== usernameCheckRef.current) return;
+          setUsernameStatus("idle");
+        }
+      })();
     }, 500);
     return () => clearTimeout(timer);
   }, [username]);
@@ -399,6 +406,18 @@ const Auth: React.FC = () => {
         });
       } catch (err) {
         console.warn("Could not reserve username:", err);
+        try {
+          // Inform the user if reservation failed; continue the flow but warn.
+          // This can happen when Firestore rules prevent writes to the `usernames` collection.
+          // The admin signup page will attempt a fallback check.
+          // Use a gentle notification to avoid blocking signup.
+          // sonner has `message` for neutral notices.
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
+          toast.message?.("Could not reserve username immediately. If you see issues completing Admin Registration, please wait a moment and try again.");
+        } catch (e) {
+          /* ignore */
+        }
       }
 
       try {
