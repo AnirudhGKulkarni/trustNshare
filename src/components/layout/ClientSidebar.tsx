@@ -19,7 +19,7 @@ import { collection, query, where, orderBy, limit, onSnapshot } from 'firebase/f
 const navigation = [
   { name: 'Dashboard', href: '/client', icon: Home, end: true },
   { name: 'Share Files', href: '/client/share', icon: Upload },
-  { name: 'Messages', href: '/client/messages', icon: MessageSquare },
+  { name: 'Chat', href: '/client/messages', icon: MessageSquare },
   { name: 'Activity', href: '/client/activity', icon: History },
   { name: 'Security', href: '/client/security', icon: Lock },
   { name: 'Profile', href: '/client/profile', icon: UserCircle },
@@ -134,68 +134,7 @@ export const ClientSidebar = ({ mobileOpen = false, onClose }: { mobileOpen?: bo
         ))}
       </nav>
 
-      <div className="p-4 border-t border-border">
-        <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-3 border">
-          <p className="text-xs font-semibold text-foreground">Need Help?</p>
-          <p className="text-xs text-muted-foreground mt-1">Contact support anytime</p>
-          <button className="mt-2 text-xs text-blue-600 hover:underline">Get Support</button>
-        </div>
-      </div>
-
-      {/* Recent Activity Mini-Cards Section */}
-      <div className="px-4 py-4 border-t border-border">
-        <div className="flex items-center gap-2 mb-3 justify-between">
-          <div className="flex items-center gap-2">
-            <ActivityIcon className="h-4 w-4 text-primary" />
-            <h3 className="text-sm font-semibold">Recent Activity</h3>
-          </div>
-          {recentActivities.length > 0 && (
-            <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">{recentActivities.length}</span>
-          )}
-        </div>
-
-        <div className="relative group">
-          <div
-            ref={activityRef}
-            className="flex gap-2 overflow-x-auto py-2 px-1 scrollbar-thin scrollbar-thumb-primary/30 scrollbar-track-transparent hover:scrollbar-thumb-primary/50"
-            style={{ scrollSnapType: 'x mandatory' }}
-          >
-            {recentActivities.length > 0 ? (
-              recentActivities.map((activity) => (
-                <div
-                  key={activity.id}
-                  className="inline-flex flex-col w-40 min-w-[10rem] p-2.5 rounded-lg border bg-gradient-to-br from-secondary/30 to-secondary/10 hover:border-primary/30 hover:shadow-sm transition-all"
-                  style={{ scrollSnapAlign: 'start' }}
-                >
-                  <div className="text-xs font-semibold text-foreground truncate">{activity.action}</div>
-                  {activity.resource && <div className="text-xs text-muted-foreground mt-1 truncate">{activity.resource}</div>}
-                  <div className="text-xs text-muted-foreground mt-2 font-medium">{getRelativeTime(activity.timestamp)}</div>
-                </div>
-              ))
-            ) : (
-              <div className="text-xs text-muted-foreground p-3 w-full text-center">No activity yet</div>
-            )}
-          </div>
-
-          {/* Right-side scroll button - visible when there's content */}
-          {recentActivities.length > 0 && (
-            <button
-              aria-label="Scroll activity right"
-              onClick={() => {
-                const el = activityRef.current;
-                if (!el) return;
-                const amount = Math.floor(el.clientWidth * 0.8) || 160;
-                el.scrollBy({ left: amount, behavior: 'smooth' });
-              }}
-              className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white border border-primary/20 rounded-full p-1.5 shadow-md hover:bg-primary/5 hover:border-primary/50 transition-all ${
-                canScrollRight ? 'opacity-100' : 'opacity-40 pointer-events-none'
-              }`}
-            >
-              <ChevronRight className="h-4 w-4 text-primary" />
-            </button>
-          )}
-        </div>
-      </div>
+      {/* Sidebar compacted: support card and recent-activity removed per request */}
     </div>
   );
 

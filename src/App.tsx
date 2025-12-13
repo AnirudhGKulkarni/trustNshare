@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useNavigate, useLocation } from "react-router-dom";
 
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import { getIdTokenResult } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 
@@ -167,7 +168,9 @@ const App = () => (
 
         <BrowserRouter>
           <ScrollToTop />
-          <Routes>
+          {/* ErrorBoundary wraps routes so rendering errors show a helpful message instead of a white page */}
+          <ErrorBoundary>
+            <Routes>
 
             {/* ⭐ PUBLIC FRONT PAGE ⭐ */}
             <Route path="/" element={<FrontPage />} />
@@ -330,7 +333,8 @@ const App = () => (
             {/* fallback */}
             <Route path="*" element={<NotFound />} />
 
-          </Routes>
+            </Routes>
+          </ErrorBoundary>
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>

@@ -69,13 +69,15 @@ export const Navbar = ({ onToggleSidebar }: { onToggleSidebar?: () => void }) =>
 
       <div className="flex items-center gap-4">
         <div className="hidden sm:block">
-          <button className="px-3 py-1 rounded-md bg-blue-700 text-white text-sm font-medium hover:opacity-95">Connect to Hardware</button>
+          {profile?.role !== "client" && (
+            <button className="px-3 py-1 rounded-md bg-blue-700 text-white text-sm font-medium hover:opacity-95">Connect to Hardware</button>
+          )}
         </div>
 
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
+            <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="flex items-center gap-2">
-              <span className="hidden md:block text-sm font-medium">{prettyRole(profile?.role)}</span>
+              <span className="hidden md:block text-sm font-medium">{displayName}</span>
             </Button>
           </DropdownMenuTrigger>
 

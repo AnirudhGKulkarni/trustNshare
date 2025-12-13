@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 // Rendered within the `/client` parent route which provides the layout
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Activity } from 'lucide-react';
+import { Activity, Eye } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { firestore } from '@/lib/firebase';
 import { collection, query, where, orderBy, limit, onSnapshot } from 'firebase/firestore';
@@ -34,6 +35,8 @@ const getRelativeTime = (ts: any) => {
 const ClientActivity: React.FC = () => {
   const { currentUser } = useAuth();
   const [items, setItems] = useState<ActivityItem[]>([]);
+  const [selected, setSelected] = useState<ActivityItem | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -54,15 +57,15 @@ const ClientActivity: React.FC = () => {
   }, [currentUser]);
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 h-full overflow-auto">
       <div>
         <h2 className="text-2xl font-bold">Recent Activity</h2>
         <p className="text-sm text-muted-foreground">Your recent actions and audit trail</p>
       </div>
 
-      <Card>
+      <Card className="max-h-[68vh] overflow-auto">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2"><Activity className="h-4 w-4" /> Activity</CardTitle>
+          {/* <CardTitle>Activity</CardTitle> */}
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
@@ -73,12 +76,61 @@ const ClientActivity: React.FC = () => {
                   <div className="text-sm font-medium">{it.action}{it.resource ? ` — ${it.resource}` : ''}</div>
                   {it.details && <div className="text-xs text-muted-foreground mt-1">{it.details}</div>}
                 </div>
-                <div className="text-xs text-muted-foreground">{getRelativeTime(it.timestamp)}</div>
+                <div className="flex items-center gap-3">
+                  {/* Show view button for non-login uploads/downloads/updates */}
+                  {/login/i.test(it.action) ? null : /upload|uploaded|download|downloaded|update|updated|edit|modified|image/i.test(it.action) ? (
+                    <button
+                      aria-label={`View details for ${it.action}`}
+                      title="View details"
+                      onClick={() => { setSelected(it); setDialogOpen(true); }}
+                      className="p-1 rounded hover:bg-primary/10 text-blue-600"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </button>
+                  ) : null}
+
+                  <div className="text-xs text-muted-foreground">{getRelativeTime(it.timestamp)}</div>
+                </div>
               </div>
             ))}
           </div>
         </CardContent>
-      </Card>
+        </Card>
+
+        {/* Detail dialog for viewable activities */}
+        <Dialog open={dialogOpen} onOpenChange={(open) => { if (!open) setSelected(null); setDialogOpen(open); }}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Activity details</DialogTitle>
+              <DialogDescription>{selected?.action}</DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              {selected?.resource && (
+                <div>
+                  <div className="text-sm font-medium mb-2">Resource</div>
+                  {/* If resource looks like an image URL, show preview */}
+                  {/\.(jpe?g|png|gif|webp|svg)$/i.test(String(selected.resource)) ? (
+                    <img src={String(selected.resource)} alt="activity resource" className="max-w-full max-h-[50vh] object-contain rounded" />
+                  ) : (
+                    <div className="text-sm text-muted-foreground break-all">{String(selected.resource)}</div>
+                  )}
+                </div>
+              )}
+
+              {selected?.details && (
+                <div>
+                  <div className="text-sm font-medium mb-2">Details</div>
+                  <div className="text-sm text-muted-foreground whitespace-pre-wrap">{String(selected.details)}</div>
+                </div>
+              )}
+
+              {!selected?.resource && !selected?.details && (
+                <div className="text-sm text-muted-foreground">No additional details available.</div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
     </div>
   );
 };

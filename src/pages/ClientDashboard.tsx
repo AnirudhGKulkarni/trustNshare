@@ -476,35 +476,7 @@ const ClientDashboard: React.FC = () => {
       <>
       {/* MAIN CONTENT within ClientLayout sidebar */}
       <div className="flex-1 flex flex-col">
-        {/* NAVBAR */}
-        <header className="bg-white border-b">
-          <div className="px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-4">
-              <div className="text-lg font-semibold">trustNshare</div>
-              <div className="text-sm text-muted-foreground">Client Dashboard</div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <Button variant="ghost" onClick={goToSettings} className="hidden sm:inline-flex">
-                <span className="flex items-center gap-2">
-                  <Settings className="h-4 w-4" /> Settings
-                </span>
-              </Button>
-
-              <Button variant="ghost" onClick={goToProfile} className="hidden sm:inline-flex">
-                <span className="flex items-center gap-2">
-                  <User className="h-4 w-4" /> {displayName}
-                </span>
-              </Button>
-
-              <Button variant="destructive" onClick={handleLogout} className="flex items-center gap-2">
-                <LogOut className="h-4 w-4" /> Logout
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
+        {/* MAIN NAVBAR is provided globally; page-level duplicate removed */}
 
       {/* MAIN */}
       <main className="flex-1 p-6 overflow-auto">
