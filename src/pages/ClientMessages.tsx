@@ -3,7 +3,8 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, Paperclip, MoreVertical, Send, Shield, Smile, Mic, Star, Download, Paintbrush } from 'lucide-react';
-import { collection, query, where, orderBy, onSnapshot, addDoc, serverTimestamp, getDocs, doc, updateDoc } from 'firebase/firestore';
+import { collection, query, where, orderBy, onSnapshot, addDoc, serverTimestamp, getDocs, doc, updateDoc, setDoc } from 'firebase/firestore';
+import { toast } from 'sonner';
 import { firestore, storage } from '@/lib/firebase';
 import { ref as storageRef, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { useAuth } from '@/contexts/AuthContext';
@@ -28,23 +29,49 @@ const ClientMessages: React.FC = () => {
   const bgInputRef = useRef<HTMLInputElement | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
 
-  // load contacts (clients + admins)
+  // load contacts (clients + admins) and subscribe to realtime message summaries
   useEffect(() => {
     if (!currentUser) return;
-    const load = async () => {
-      try {
-        const q = query(collection(firestore, 'users'), where('role', 'in', ['client', 'admin']));
-        const snaps = await getDocs(q);
-        const loaded = snaps.docs.map((d) => ({ uid: d.id, ...(d.data() as any) }));
-        const me = { uid: currentUser.uid, displayName: currentUser.displayName || currentUser.email || 'Me', isMe: true };
-        const others = loaded.filter((c) => c.uid !== currentUser.uid);
-        const all = [me, ...others];
-        setContacts(all);
-      } catch (e) {
-        console.warn('load contacts', e);
-      }
+
+    // subscribe to users (clients + admins)
+    const usersQuery = query(collection(firestore, 'users'), where('role', 'in', ['client', 'admin']));
+    const unsubUsers = onSnapshot(usersQuery, (snap) => {
+      const loaded = snap.docs.map((d) => ({ uid: d.id, ...(d.data() as any) }));
+      const me = { uid: currentUser.uid, displayName: currentUser.displayName || currentUser.email || 'Me', isMe: true } as any;
+      const others = loaded.filter((c) => c.uid !== currentUser.uid);
+      const all = [me, ...others];
+      setContacts(all);
+    }, (e) => console.warn('users listen', e));
+
+    // subscribe to all messages that involve me to compute lastMessage + unread counts per contact
+    const msgsQuery = query(collection(firestore, 'messages'), where('participants', 'array-contains', currentUser.uid), orderBy('timestamp', 'desc'));
+    const unsubMsgs = onSnapshot(msgsQuery, (snap) => {
+      // compute a map of summaries keyed by other participant uid
+      const summaries: Record<string, { lastMessage?: string; lastTimestamp?: any; unreadCount: number }> = {};
+      snap.docs.forEach((d) => {
+        const m = d.data() as any;
+        const other = Array.isArray(m.participants) ? m.participants.find((p: string) => p !== currentUser.uid) : (m.from === currentUser.uid ? m.to : m.from);
+        if (!other) return;
+        if (!summaries[other]) summaries[other] = { lastMessage: '', lastTimestamp: null, unreadCount: 0 };
+        // last message is the most recent due to desc ordering
+        if (!summaries[other].lastMessage) {
+          summaries[other].lastMessage = m.messageType === 'file' ? `[file] ${m.content || (m.file && m.file.name) || ''}` : (m.content || '');
+          summaries[other].lastTimestamp = m.timestamp;
+        }
+        // unread if message is to me and not marked read
+        if (m.to === currentUser.uid && m.from === other && m.read !== true) {
+          summaries[other].unreadCount = (summaries[other].unreadCount || 0) + 1;
+        }
+      });
+
+      // merge summaries into contacts state
+      setContacts((prev) => prev.map((c) => ({ ...c, lastMessage: summaries[c.uid]?.lastMessage, lastTimestamp: summaries[c.uid]?.lastTimestamp, unreadCount: summaries[c.uid]?.unreadCount || 0 })));
+    }, (e) => console.warn('messages summary listen', e));
+
+    return () => {
+      try { unsubUsers(); } catch (e) {}
+      try { unsubMsgs(); } catch (e) {}
     };
-    load();
   }, [currentUser]);
 
   // messages listener for selected conversation
@@ -75,17 +102,38 @@ const ClientMessages: React.FC = () => {
     el.scrollTop = el.scrollHeight;
   }, [messages, selected]);
 
+  // mark messages as read when opening a conversation
+  useEffect(() => {
+    if (!currentUser || !selected || !messages.length) return;
+    const unread = messages.filter((m) => m.to === currentUser.uid && m.from === selected.uid && m.read !== true && m.id && !m._temp);
+    unread.forEach((m) => {
+      try {
+        const ref = doc(firestore, 'messages', m.id);
+        updateDoc(ref, { read: true }).catch(() => {});
+      } catch (e) {
+        // ignore
+      }
+    });
+  }, [messages, selected, currentUser]);
+
   const sendMessage = async () => {
     if (!text.trim() || !currentUser || !selected) return;
     const content = text.trim();
     const convoId = [currentUser.uid, selected.uid].sort().join('_');
-    const temp = { id: `temp-${Date.now()}`, from: currentUser.uid, to: selected.uid, content, convoId, participants: [currentUser.uid, selected.uid], timestampText: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), _temp: true };
+    // pre-create a doc ref so we can use the same id for optimistic UI
+    const newRef = doc(collection(firestore, 'messages'));
+    const tempId = newRef.id;
+    const temp = { id: tempId, from: currentUser.uid, to: selected.uid, content, convoId, participants: [currentUser.uid, selected.uid], timestampText: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), _temp: true, pending: true };
     setMessages((s) => [...s, temp]);
     setText('');
     try {
-      await addDoc(collection(firestore, 'messages'), { from: currentUser.uid, to: selected.uid, content, timestamp: serverTimestamp(), participants: [currentUser.uid, selected.uid], convoId });
+      await setDoc(newRef, { from: currentUser.uid, to: selected.uid, content, timestamp: serverTimestamp(), participants: [currentUser.uid, selected.uid], convoId });
     } catch (e) {
       console.warn('send error', e);
+      // mark temp as failed so user sees it's not persisted
+      setMessages((s) => s.map((m) => m.id === tempId ? { ...m, pending: false, failed: true } : m));
+      toast?.error?.('Failed to send message. It will be retried automatically.');
+      // optionally implement retry later
     }
   };
 
@@ -102,7 +150,11 @@ const ClientMessages: React.FC = () => {
         setUploading(false);
       }, async () => {
         const url = await getDownloadURL(uploadTask.snapshot.ref);
-        await addDoc(collection(firestore, 'messages'), {
+        // pre-create doc so optimistic UI uses same id
+        const newRef = doc(collection(firestore, 'messages'));
+        const tempId = newRef.id;
+        setMessages((s) => [...s, { id: tempId, from: currentUser.uid, to: selected.uid, content: file.name, file: { name: file.name }, convoId, participants: [currentUser.uid, selected.uid], timestampText: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), _temp: true, pending: true, messageType: 'file' }]);
+        await setDoc(newRef, {
           from: currentUser.uid,
           to: selected.uid,
           content: file.name,
@@ -292,7 +344,10 @@ const ClientMessages: React.FC = () => {
               </div>
               <div className="flex-1 overflow-auto">
                 <div className="divide-y">
-                  {contacts.filter(c => (c.displayName || c.username || c.email || '').toLowerCase().includes(search.toLowerCase())).map((c) => (
+                  {contacts
+                    .filter(c => !c.isMe)
+                    .filter(c => (c.displayName || c.username || c.email || '').toLowerCase().includes(search.toLowerCase()))
+                    .map((c) => (
                     <button key={c.uid} onClick={() => setSelected(c)} className={`w-full text-left p-3 flex items-center gap-3 hover:bg-gray-50 ${selected?.uid === c.uid ? 'bg-gray-100' : ''}`}>
                       <Avatar className="h-10 w-10">
                         <AvatarFallback className="text-xs">{(c.displayName || c.username || c.email || '').slice(0,2).toUpperCase()}</AvatarFallback>
