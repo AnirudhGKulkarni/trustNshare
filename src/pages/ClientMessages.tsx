@@ -74,24 +74,32 @@ const ClientMessages: React.FC = () => {
     };
   }, [currentUser]);
 
-  // messages listener for selected conversation
+  // messages listener for selected conversation - prefer convoId query for realtime accuracy
   useEffect(() => {
     if (!currentUser || !selected) {
       setMessages([]);
       return;
     }
     setMessages([]);
+    const convoId = [currentUser.uid, selected.uid].sort().join('_');
     const coll = collection(firestore, 'messages');
-    const q = query(coll, where('participants', 'array-contains', currentUser.uid), orderBy('timestamp', 'asc'));
+    // prefer listening by convoId (more precise & efficient)
+    // include an additional `participants` filter so security rules that
+    // permit `array-contains` on participants allow this query.
+    const q = query(
+      coll,
+      where('convoId', '==', convoId),
+      where('participants', 'array-contains', currentUser.uid),
+      orderBy('timestamp', 'asc')
+    );
     const unsub = onSnapshot(q, (snap) => {
       const docs = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
-      const convo = docs.filter((m: any) => {
-        if (Array.isArray(m.participants)) return m.participants.includes(selected.uid);
-        return (m.from === currentUser.uid && m.to === selected.uid) || (m.from === selected.uid && m.to === currentUser.uid);
-      });
-      const annotated = convo.map((m: any) => ({ ...m, timestampText: m.timestamp && m.timestamp.toDate ? m.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '' }));
+      const annotated = docs.map((m: any) => ({ ...m, timestampText: m.timestamp && m.timestamp.toDate ? m.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '' }));
       setMessages(annotated);
-    }, (e) => console.warn('messages listen', e));
+    }, (e) => {
+      console.warn('messages listen error', e);
+      toast?.error?.('Unable to load messages (check console).');
+    });
 
     return () => unsub();
   }, [currentUser, selected]);
