@@ -12,10 +12,6 @@ export const DashboardFooter = () => {
           {/* Brand / About */}
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
-                <Shield className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-foreground text-lg font-bold">trustNshare</span>
             </div>
             <p className="text-sm leading-relaxed">
               Enterprise-grade file sharing with military-grade encryption and complete compliance.

@@ -54,7 +54,20 @@ const trustedPartners = [
 
 const FrontPage: React.FC = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [isDarkMode] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+    return false;
+  });
+
+  // Ensure the correct class is set on the root element for CSS background switching
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.documentElement.classList.toggle('dark', isDarkMode);
+      document.documentElement.classList.toggle('light', !isDarkMode);
+    }
+  }, [isDarkMode]);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [fbLoading, setFbLoading] = useState(false);
   const [fbName, setFbName] = useState("");
@@ -79,30 +92,35 @@ const FrontPage: React.FC = () => {
       description: "Share files with end-to-end encryption and access control",
       icon: Shield,
       color: "from-blue-500 to-blue-600",
+      lightColor: "from-blue-200 to-blue-300",
     },
     {
       title: "Military-Grade Encryption",
       description: "256-bit encryption ensuring your data is always protected",
       icon: Lock,
       color: "from-purple-500 to-purple-600",
+      lightColor: "from-purple-200 to-purple-300",
     },
     {
       title: "Granular Access Control",
       description: "Control who can access your files with detailed permissions",
       icon: Users,
       color: "from-pink-500 to-pink-600",
+      lightColor: "from-pink-200 to-pink-300",
     },
     {
       title: "Audit Trails",
       description: "Track every action taken on your sensitive documents",
       icon: Eye,
       color: "from-green-500 to-green-600",
+      lightColor: "from-green-200 to-green-300",
     },
     {
       title: "Compliance Ready",
       description: "Meet regulatory requirements with our secure platform",
       icon: CheckCircle,
       color: "from-orange-500 to-orange-600",
+      lightColor: "from-orange-200 to-orange-300",
     },
   ];
 
@@ -254,12 +272,31 @@ const FrontPage: React.FC = () => {
   const prevSlide = () => setCurrentSlide((prev) => (prev - 1 + carouselItems.length) % carouselItems.length);
 
   const CurrentIcon = carouselItems[currentSlide].icon;
+  const currentGradient = isDarkMode
+    ? carouselItems[currentSlide].color
+    : carouselItems[currentSlide].lightColor ?? carouselItems[currentSlide].color;
+  const carouselTitleClass = isDarkMode ? "text-white" : "text-gray-900";
+  const carouselDescriptionClass = isDarkMode ? "text-gray-100" : "text-gray-700";
+  const carouselIconColor = isDarkMode ? "text-white" : "text-gray-900";
   const bgClass = isDarkMode ? "bg-gray-900 text-white" : "bg-white text-gray-900";
   const cardBgClass = isDarkMode ? "bg-gray-800" : "bg-white";
+  const carouselDotContainerClass = isDarkMode ? "bg-white/10" : "bg-black/10";
+  const carouselDotActiveClass = isDarkMode ? "bg-white" : "bg-gray-900";
+  const carouselDotInactiveClass = isDarkMode ? "bg-white/50 hover:bg-white/75" : "bg-gray-900/40 hover:bg-gray-900/70";
+
+  const handleThemeToggle = () => {
+    setIsDarkMode((prev) => {
+      const next = !prev;
+      if (typeof document !== 'undefined') {
+        document.documentElement.classList.toggle('dark', next);
+      }
+      return next;
+    });
+  };
 
   return (
     <div className={`${bgClass} transition-colors duration-300`}>
-      <FrontNavbar isDarkMode={isDarkMode} />
+      <FrontNavbar isDarkMode={isDarkMode} onThemeToggle={handleThemeToggle} />
 
       {/* Hero Section with CTA */}
       <section
@@ -316,44 +353,32 @@ const FrontPage: React.FC = () => {
         <div className="absolute inset-0 bg-black/30 -z-10 pointer-events-none" />
 
         {/* Hero Carousel Section */}
-        <section className={`relative w-full h-96 overflow-hidden ${isDarkMode ? "bg-gray-800/30" : "bg-gradient-to-r from-blue-50/30 to-purple-50/30"}`}>
+        <section className={`relative w-full h-96 overflow-hidden ${isDarkMode ? "bg-gray-800/30" : "bg-gradient-to-r from-blue-50/40 to-purple-50/40"}`}>
         <div className="relative w-full h-full flex items-center justify-center">
           {/* Carousel Content with Animation */}
-          <div className="text-center text-white z-10 px-6 animate-scale-in" key={`carousel-${currentSlide}`}>
-            <div className={`bg-gradient-to-r ${carouselItems[currentSlide].color} rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6 shadow-lg transform transition-transform duration-500 hover:scale-110`}>
-              <CurrentIcon className="w-10 h-10" />
+          <div className={`text-center z-10 px-6 animate-scale-in ${carouselTitleClass}`} key={`carousel-${currentSlide}`}>
+            <div className={`bg-gradient-to-r ${currentGradient} rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6 shadow-lg transform transition-transform duration-500 hover:scale-110`}>
+              <CurrentIcon className={`w-10 h-10 ${carouselIconColor}`} />
             </div>
-            <h2 className="text-4xl font-bold mb-4 transition-all duration-500">{carouselItems[currentSlide].title}</h2>
-            <p className="text-xl opacity-90 transition-all duration-500">{carouselItems[currentSlide].description}</p>
+            <h2 className={`text-4xl font-bold mb-4 transition-all duration-500 ${carouselTitleClass}`}>{carouselItems[currentSlide].title}</h2>
+            <p className={`text-xl transition-all duration-500 ${carouselDescriptionClass} ${isDarkMode ? "opacity-90" : "opacity-95"}`}>{carouselItems[currentSlide].description}</p>
           </div>
 
           {/* Carousel Background with smooth transition */}
-          <div className={`absolute inset-0 bg-gradient-to-r ${carouselItems[currentSlide].color} -z-10 transition-all duration-700`}></div>
-
-          {/* Navigation Buttons with enhanced styling */}
-          <button
-            onClick={prevSlide}
-            className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-white/30 hover:bg-white/50 text-white rounded-full p-3 transition-all duration-300 transform hover:scale-110 active:scale-95 shadow-lg backdrop-blur-sm"
-            aria-label="Previous slide"
-          >
-            <ChevronLeft className="w-6 h-6" />
-          </button>
-          <button
-            onClick={nextSlide}
-            className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-white/30 hover:bg-white/50 text-white rounded-full p-3 transition-all duration-300 transform hover:scale-110 active:scale-95 shadow-lg backdrop-blur-sm"
-            aria-label="Next slide"
-          >
-            <ChevronRight className="w-6 h-6" />
-          </button>
+          <div className={`absolute inset-0 bg-gradient-to-r ${currentGradient} -z-10 transition-all duration-700`}></div>
 
           {/* Dots with enhanced styling */}
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-2 bg-white/10 px-4 py-2 rounded-full backdrop-blur-sm">
+          <div className={`absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-2 px-4 py-2 rounded-full backdrop-blur-sm border ${
+            isDarkMode ? "border-white/10" : "border-black/10"
+          } ${carouselDotContainerClass}`}>
             {carouselItems.map((_, idx) => (
               <button
                 key={idx}
                 onClick={() => setCurrentSlide(idx)}
                 className={`rounded-full transition-all duration-300 transform hover:scale-150 ${
-                  idx === currentSlide ? "bg-white w-8 h-2 shadow-lg" : "bg-white/50 w-2 h-2 hover:bg-white/75"
+                  idx === currentSlide
+                    ? `${carouselDotActiveClass} w-8 h-2 shadow-lg`
+                    : `${carouselDotInactiveClass} w-2 h-2`
                 }`}
                 aria-label={`Go to slide ${idx + 1}`}
               />
@@ -574,15 +599,12 @@ const FrontPage: React.FC = () => {
       </section>
 
       {/* Footer - Enhanced */}
-      <footer className={`${isDarkMode ? "bg-gray-900 border-t border-gray-800" : "bg-gray-900 border-t border-gray-800"} text-white py-16 px-6`}>
+      <footer className={`footer-bg-image ${isDarkMode ? "bg-gray-900 border-t border-gray-800" : "bg-gray-900 border-t border-gray-800"} text-white py-16 px-6`}>
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
           {/* Brand / About */}
           <div className="animate-fade-in" id="about">
             <div className="flex items-center gap-2 mb-4 group cursor-pointer">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center group-hover:scale-110 transition-transform">
-                <Shield className="w-5 h-5" />
-              </div>
-              <span className="text-xl font-bold group-hover:text-blue-400 transition-colors">trustNshare</span>
+             <img src="/bg.png" alt="trustNshare" className="h-12 md:h-16 object-contain" />
             </div>
             <p className="text-gray-400 text-sm leading-relaxed">Enterprise-grade file sharing with military-grade encryption and complete compliance.</p>
             <div className="mt-4">

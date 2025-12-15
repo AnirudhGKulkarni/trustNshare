@@ -492,10 +492,7 @@ const Auth: React.FC = () => {
             <div className="w-full max-w-md">
             <CardHeader className="space-y-4 text-center">
               <div className="mx-auto flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-purple-600 shadow-sm">
-                  <Shield className="h-6 w-6 text-white" />
-                </div>
-                <div className="text-lg font-semibold">trustNshare</div>
+                <img src="/bg.png" alt="trustNshare" className="h-12 md:h-16 object-contain" />
               </div>
               <div className="pt-2">
                 <div className="flex items-center justify-center gap-2 rounded-full bg-gray-800/80 border border-gray-700 p-1 w-max mx-auto">

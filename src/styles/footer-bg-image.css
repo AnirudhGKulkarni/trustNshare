@@ -1,0 +1,11 @@
+/*
+  Set the footer background to the provided image (footer bg.jpg).
+  This class can be used on the footer for a full-width background effect.
+*/
+
+.footer-bg-image {
+  background-image: url('/footer bg.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}

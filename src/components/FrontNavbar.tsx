@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import "@/styles/navbar-bg-image.css";
 import { Link } from "react-router-dom";
 import { ChevronDown, Menu, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -70,8 +71,9 @@ const FrontNavbar: React.FC<FrontNavbarProps> = ({ isDarkMode = false, onThemeTo
     { label: "About", href: "#about" },
   ];
 
+  // Detect if on home page (window.location.pathname === "/")
   return (
-    <nav className={`sticky top-0 z-50 transition-all duration-300 backdrop-blur-md border-b ${
+    <nav className={`sticky top-0 z-50 transition-all duration-300 backdrop-blur-md border-b navbar-bg-image ${
       isDarkMode 
         ? "bg-gray-900/80 border-gray-800/50 shadow-lg" 
         : "bg-white/80 border-gray-200/50 shadow-md"
@@ -86,8 +88,7 @@ const FrontNavbar: React.FC<FrontNavbarProps> = ({ isDarkMode = false, onThemeTo
           <div className="flex items-center gap-3 flex-shrink-0 animate-fade-in">
             <Link to="/" className="block">
               <div className="h-12 md:h-16 overflow-hidden">
-                <img src="/trustNshare.jpg" alt="trustNshare" className="h-12 md:h-16 object-contain block dark:hidden" />
-                <img src="/bg.png" alt="trustNshare dark" className="h-12 md:h-16 object-contain hidden dark:block" />
+                <img src="/bg.png" alt="trustNshare" className="h-12 md:h-16 object-contain" />
               </div>
             </Link>
           </div>
@@ -215,12 +216,19 @@ const FrontNavbar: React.FC<FrontNavbarProps> = ({ isDarkMode = false, onThemeTo
                   >
                     Login/Signup
                   </Link>
-                  <Link
-                    to="/admin-signup"
-                    className="rounded-lg px-4 py-2 text-sm font-medium bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105 active:scale-95 hover:from-blue-700 hover:to-blue-800"
-                  >
-                    Admin Signup
-                  </Link>
+                  <div className="flex items-center gap-2">
+                    <Link
+                      to="/admin-signup"
+                      className="rounded-lg px-4 py-2 text-sm font-medium bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105 active:scale-95 hover:from-blue-700 hover:to-blue-800"
+                    >
+                      Admin Signup
+                    </Link>
+                    {/* Toggle Switch */}
+                    <label className="inline-flex relative items-center cursor-pointer ml-2">
+                      <input type="checkbox" checked={isDarkMode} onChange={onThemeToggle} className="sr-only peer" />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 dark:bg-gray-700 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                    </label>
+                  </div>
                 </>
               )}
               </div>

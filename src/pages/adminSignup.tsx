@@ -167,10 +167,7 @@ const AdminSignup: React.FC = () => {
       <Card className="w-full max-w-lg shadow-elevated bg-gray-900 text-gray-100 border border-gray-800">
         <CardHeader className="space-y-4 text-center">
           <div className="mx-auto flex items-center gap-3">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-purple-600 shadow-lg">
-              <Shield className="h-8 w-8 text-white" />
-            </div>
-            <div className="text-lg font-semibold">trustNshare</div>
+            <img src="/bg.png" alt="trustNshare" className="h-12 md:h-16 object-contain" />
           </div>
 
           <div className="pt-2">

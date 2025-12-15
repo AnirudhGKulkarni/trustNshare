@@ -1,0 +1,19 @@
+/*
+  Set the navbar background to the provided image (navbar background image).
+  This class can be used on the navbar for a full-width background effect.
+*/
+
+.navbar-bg-image {
+  background-image: url('/navbb.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.light .navbar-bg-image {
+  background-image: url('/light navbb.jpg');
+}
+
+.dark .navbar-bg-image {
+  background-image: url('/navbb.jpg');
+}
