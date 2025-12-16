@@ -77,20 +77,20 @@ export const Navbar = ({ onToggleSidebar }: { onToggleSidebar?: () => void }) =>
             <path fillRule="evenodd" d="M3 5h14a1 1 0 010 2H3a1 1 0 110-2zm0 4h14a1 1 0 010 2H3a1 1 0 110-2zm0 4h14a1 1 0 010 2H3a1 1 0 110-2z" clipRule="evenodd" />
           </svg>
         </button>
-        {profile && ["super_admin", "admin", "client"].includes(profile.role) ? (
-          <div className="flex flex-col">
-            <h1 className="text-xl font-semibold text-foreground">trustNshare</h1>
-            <span className="text-sm text-muted-foreground">{prettyRole(profile.role)}</span>
-          </div>
-        ) : (
-          <>
-            <div className="h-8 w-8 rounded-md overflow-hidden">
-              <img src="/trustNshare.jpg" alt="trustNshare" className="w-8 h-8 object-cover block dark:hidden" />
-              <img src="/bg.png" alt="trustNshare dark" className="w-8 h-8 object-cover hidden dark:block" />
+          {profile && ["super_admin", "admin", "client"].includes(profile.role) ? (
+            <div className="flex flex-col">
+              <h1 className="text-xl font-semibold text-foreground">trustNshare</h1>
+              <span className="text-sm text-muted-foreground">{prettyRole(profile.role)}</span>
             </div>
-            <h1 className="text-xl font-semibold text-foreground">trustNshare</h1>
-          </>
-        )}
+          ) : (
+            <>
+              <div className="h-8 w-8 rounded-md overflow-hidden">
+                <img src="/lbg.png" alt="trustNshare light" className="w-8 h-8 object-cover block dark:hidden" />
+                <img src="/bg.png" alt="trustNshare dark" className="w-8 h-8 object-cover hidden dark:block" />
+              </div>
+              <h1 className="text-xl font-semibold text-foreground">trustNshare</h1>
+            </>
+          )}
       </div>
 
       <div className="flex items-center gap-4">

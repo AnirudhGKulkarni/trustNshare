@@ -64,8 +64,9 @@ const Signup: React.FC = () => {
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-secondary to-accent p-6">
       <Card className="w-full max-w-lg shadow-elevated">
         <CardHeader className="space-y-4 text-center">
-          <div>
-            <img src="/bg.png" alt="trustNshare logo" className="h-8 w-auto rounded-lg object-cover" />
+          <div className="flex justify-center">
+            <img src="/lbg.png" alt="trustNshare light" className="h-8 w-auto rounded-lg object-cover block dark:hidden" />
+            <img src="/bg.png" alt="trustNshare" className="h-8 w-auto rounded-lg object-cover hidden dark:block" />
           </div>
 
           <div className="pt-2">

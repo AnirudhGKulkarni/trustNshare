@@ -88,7 +88,8 @@ const FrontNavbar: React.FC<FrontNavbarProps> = ({ isDarkMode = false, onThemeTo
           <div className="flex items-center gap-3 flex-shrink-0 animate-fade-in">
             <Link to="/" className="block">
               <div className="h-12 md:h-16 overflow-hidden">
-                <img src="/bg.png" alt="trustNshare" className="h-12 md:h-16 object-contain" />
+                <img src="/lbg.png" alt="trustNshare light" className="h-12 md:h-16 object-contain block dark:hidden" />
+                <img src="/bg.png" alt="trustNshare dark" className="h-12 md:h-16 object-contain hidden dark:block" />
               </div>
             </Link>
           </div>

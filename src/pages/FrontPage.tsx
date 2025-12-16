@@ -316,14 +316,14 @@ const FrontPage: React.FC = () => {
           loop
           playsInline
           preload="auto"
-          src={isSmallScreen ? "/mobilevideo.mp4" : "/logovideo.mp4"}
-          poster="/bg.png"
+          src={isSmallScreen ? (isDarkMode ? "/mobilevideo.mp4" : "/moblight.mp4") : (isDarkMode ? "/logovideo.mp4" : "/herolight.mp4")}
+          poster={isDarkMode ? "/bg.png" : "/lbg.png"}
           aria-hidden="true"
           style={{ pointerEvents: 'none', objectPosition: 'center center' as any }}
         />
 
         {/* Gradient overlay above the video to preserve contrast */}
-        <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-br from-gray-900/40 via-gray-800/22 to-gray-900/40" />
+        {isDarkMode && <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-br from-gray-900/40 via-gray-800/22 to-gray-900/40" />}
 
         <div className="absolute inset-0 opacity-10 pointer-events-none z-10">
           <div className="absolute top-20 left-10 w-72 h-72 bg-white rounded-full mix-blend-multiply filter blur-3xl animate-pulse"></div>
@@ -333,10 +333,10 @@ const FrontPage: React.FC = () => {
         <div className="max-w-7xl mx-auto relative z-20">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             <div className="animate-fade-in">
-              <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
+              <h1 className={`text-2xl md:text-6xl font-bold mb-6 leading-tight ${isDarkMode ? 'text-white' : ''}`} style={isDarkMode ? {} : {color: '#0C2647', textShadow: '0 0 20px rgba(255,255,255,0.9), 0 0 40px rgba(255,255,255,0.7), 0 0 60px rgba(255,255,255,0.5)'}}>
                 Secure File Sharing for Modern Businesses
               </h1>
-              <p className="text-lg md:text-xl opacity-90 mb-8 animate-fade-in">
+              <p className={`text-base md:text-xl opacity-90 mb-8 animate-fade-in font-semibold ${isDarkMode ? 'text-white' : ''}`} style={isDarkMode ? {} : {color: '#0C2647', textShadow: '0 0 15px rgba(255,255,255,0.9), 0 0 30px rgba(255,255,255,0.6), 0 0 45px rgba(255,255,255,0.4)'}}>
                 Protect your sensitive data with military-grade encryption, granular access controls, and complete audit visibility.
               </p>
         
@@ -604,7 +604,8 @@ const FrontPage: React.FC = () => {
           {/* Brand / About */}
           <div className="animate-fade-in" id="about">
             <div className="flex items-center gap-2 mb-4 group cursor-pointer">
-             <img src="/bg.png" alt="trustNshare" className="h-12 md:h-16 object-contain" />
+             <img src="/lbg.png" alt="trustNshare light" className="h-12 md:h-16 object-contain block dark:hidden" />
+             <img src="/bg.png" alt="trustNshare" className="h-12 md:h-16 object-contain hidden dark:block" />
             </div>
             <p className="text-gray-400 text-sm leading-relaxed">Enterprise-grade file sharing with military-grade encryption and complete compliance.</p>
             <div className="mt-4">

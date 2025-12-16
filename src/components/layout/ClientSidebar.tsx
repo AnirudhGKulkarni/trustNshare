@@ -109,7 +109,7 @@ export const ClientSidebar = ({ mobileOpen = false, onClose }: { mobileOpen?: bo
     <div className="flex flex-col w-64 bg-white dark:bg-card border-r border-border h-full">
       <div className="flex h-20 items-center px-0 border-b border-border">
         <div className="w-full h-20 overflow-hidden">
-          <img src="/trustNshare.jpg" alt="trustNshare" className="w-full h-20 object-cover block dark:hidden" />
+          <img src="/lbg.png" alt="trustNshare light" className="w-full h-20 object-cover block dark:hidden" />
           <img src="/bg.png" alt="trustNshare dark" className="w-full h-20 object-cover hidden dark:block" />
         </div>
       </div>

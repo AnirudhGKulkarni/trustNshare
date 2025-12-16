@@ -492,7 +492,8 @@ const Auth: React.FC = () => {
             <div className="w-full max-w-md">
             <CardHeader className="space-y-4 text-center">
               <div className="mx-auto flex items-center gap-3">
-                <img src="/bg.png" alt="trustNshare" className="h-12 md:h-16 object-contain" />
+                <img src="/lbg.png" alt="trustNshare light" className="h-12 md:h-16 object-contain block dark:hidden" />
+                <img src="/bg.png" alt="trustNshare" className="h-12 md:h-16 object-contain hidden dark:block" />
               </div>
               <div className="pt-2">
                 <div className="flex items-center justify-center gap-2 rounded-full bg-gray-800/80 border border-gray-700 p-1 w-max mx-auto">
