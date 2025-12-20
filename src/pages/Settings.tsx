@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { doc, updateDoc, onSnapshot } from 'firebase/firestore';
+import { doc, updateDoc, onSnapshot, getDoc, setDoc, collection, getDocs } from 'firebase/firestore';
 import { firestore } from '@/lib/firebase';
 import { useAuth } from '@/contexts/AuthContext';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
  
-import { User, Lock, Bell, Moon } from 'lucide-react';
+import { User, Lock, Bell, Moon, Shield, Database } from 'lucide-react';
 import { toast } from 'sonner';
 
 const Settings = () => {
@@ -62,6 +62,64 @@ const Settings = () => {
     } catch (e) {
       console.error('update user settings failed', e);
       toast.error('Failed to save settings');
+    }
+  };
+
+  // Super-admin system settings
+  const [systemSettings, setSystemSettings] = useState<{ maintenanceMode?: boolean; requireAdminApproval?: boolean; auditLogRetentionDays?: number }>({});
+  const [loadingSystemSettings, setLoadingSystemSettings] = useState(false);
+
+  useEffect(() => {
+    const load = async () => {
+      if (profile?.role !== 'super_admin') return;
+      try {
+        setLoadingSystemSettings(true);
+        const ref = doc(firestore, 'system_settings', 'global');
+        const snap = await getDoc(ref);
+        if (snap.exists()) setSystemSettings(snap.data() as any);
+        else setSystemSettings({ maintenanceMode: false, requireAdminApproval: true, auditLogRetentionDays: 90 });
+      } catch (e) {
+        console.error('load system settings', e);
+      } finally {
+        setLoadingSystemSettings(false);
+      }
+    };
+    load();
+  }, [profile]);
+
+  const saveSystemSettings = async () => {
+    if (profile?.role !== 'super_admin') return toast.error('Not authorized');
+    try {
+      const ref = doc(firestore, 'system_settings', 'global');
+      await setDoc(ref, systemSettings, { merge: true });
+      toast.success('System settings saved');
+    } catch (e) {
+      console.error('save system settings', e);
+      toast.error('Failed saving system settings');
+    }
+  };
+
+  const exportAllUsers = async () => {
+    if (profile?.role !== 'super_admin') return toast.error('Not authorized');
+    try {
+      const snaps = await getDocs(collection(firestore, 'users'));
+      const rows: string[][] = [["id","firstName","lastName","email","role","company"]];
+      snaps.forEach(s => {
+        const d = s.data() as any;
+        rows.push([s.id, d.firstName || '', d.lastName || '', d.email || '', d.role || '', d.company || '']);
+      });
+      const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `users_${new Date().toISOString().slice(0,10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success('Export started');
+    } catch (e) {
+      console.error('export users failed', e);
+      toast.error('Export failed');
     }
   };
 
@@ -253,6 +311,63 @@ const Settings = () => {
               </div>
             </CardContent>
           </Card>
+
+          {profile?.role === 'super_admin' && (
+            <Card className="shadow-card">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                    <Shield className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <CardTitle>System Settings</CardTitle>
+                    <CardDescription>Global settings for the platform</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-base">Maintenance Mode</Label>
+                    <p className="text-sm text-muted-foreground">Put the system into maintenance mode (restrict access)</p>
+                  </div>
+                  <Switch
+                    checked={!!systemSettings.maintenanceMode}
+                    onCheckedChange={(v: boolean) => setSystemSettings((s) => ({ ...s, maintenanceMode: !!v }))}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-base">Require Admin Approval</Label>
+                    <p className="text-sm text-muted-foreground">New admin registrations require super-admin approval</p>
+                  </div>
+                  <Switch
+                    checked={!!systemSettings.requireAdminApproval}
+                    onCheckedChange={(v: boolean) => setSystemSettings((s) => ({ ...s, requireAdminApproval: !!v }))}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-base">Audit Log Retention (days)</Label>
+                    <p className="text-sm text-muted-foreground">How long to retain audit logs before automatic pruning</p>
+                  </div>
+                  <input
+                    type="number"
+                    className="w-24 form-input px-2 py-1 border rounded"
+                    value={systemSettings.auditLogRetentionDays ?? 90}
+                    onChange={(e) => setSystemSettings((s) => ({ ...s, auditLogRetentionDays: Number(e.target.value || 0) }))}
+                  />
+                </div>
+
+                <div className="flex gap-2">
+                  <Button onClick={saveSystemSettings}>Save System Settings</Button>
+                  <Button variant="ghost" onClick={exportAllUsers}>Export All Users</Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <Card className="shadow-card">
             <CardHeader>

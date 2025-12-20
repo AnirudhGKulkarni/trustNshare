@@ -21,7 +21,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       ) : (
         <Sidebar mobileOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       )}
-      <div className="flex flex-1 flex-col">
+      <div className="flex flex-1 flex-col text-foreground">
         <Navbar onToggleSidebar={() => setSidebarOpen((s) => !s)} />
         <main className="flex-1 p-6 lg:p-8">
           {children}

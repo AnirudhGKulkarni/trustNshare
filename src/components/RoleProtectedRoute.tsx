@@ -28,6 +28,9 @@ export const RoleProtectedRoute: React.FC<{ children: React.ReactNode; requiredR
       if (isActive && !isPaid) return "/pricing";
     }
 
+    // Allow super_admin users to access admin-level routes
+    if (requiredRole === 'admin' && pr.role === 'super_admin') return null;
+
     if (pr.role !== requiredRole) return pr.role === "super_admin" ? "/super-admin" : pr.role === "admin" ? "/dashboard" : "/client";
 
     return null;

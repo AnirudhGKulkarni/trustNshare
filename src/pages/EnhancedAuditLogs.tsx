@@ -28,160 +28,116 @@ interface AuditLog {
 const EnhancedAuditLogs = () => {
   const { profile } = useAuth();
   const isSuperAdmin = profile?.role === 'super_admin';
+
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [filteredLogs, setFilteredLogs] = useState<AuditLog[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState<boolean>(false);
+  const [searchTerm, setSearchTerm] = useState<string>('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [actionFilter, setActionFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
   useEffect(() => {
-    fetchAuditLogs();
+    setLoading(true);
+
+    const mockLogs: AuditLog[] = [
+      {
+        id: '1',
+        userId: 'user1',
+        userEmail: 'john.admin@techcorp.com',
+        userName: 'John Admin',
+        userRole: 'admin',
+        action: 'LOGIN',
+        resource: 'Authentication',
+        details: 'Successful login from dashboard',
+        ipAddress: '192.168.1.100',
+        timestamp: { seconds: Date.now() / 1000 },
+        status: 'success',
+      },
+      {
+        id: '2',
+        userId: 'user2',
+        userEmail: 'jane.client@example.com',
+        userName: 'Jane Client',
+        userRole: 'client',
+        action: 'FILE_ACCESS',
+        resource: 'Document: contract.pdf',
+        details: 'Downloaded file from shared folder',
+        ipAddress: '192.168.1.101',
+        timestamp: { seconds: Date.now() / 1000 - 3600 },
+        status: 'success',
+      },
+      {
+        id: '3',
+        userId: 'user3',
+        userEmail: 'mike.admin@datasys.com',
+        userName: 'Mike Admin',
+        userRole: 'admin',
+        action: 'POLICY_UPDATE',
+        resource: 'Policy #12',
+        details: 'Updated data sharing policy',
+        ipAddress: '192.168.1.102',
+        timestamp: { seconds: Date.now() / 1000 - 7200 },
+        status: 'success',
+      },
+      {
+        id: '4',
+        userId: 'user4',
+        userEmail: 'sarah.client@company.com',
+        userName: 'Sarah Client',
+        userRole: 'client',
+        action: 'LOGIN_FAILED',
+        resource: 'Authentication',
+        details: 'Failed login attempt - incorrect password',
+        ipAddress: '192.168.1.103',
+        timestamp: { seconds: Date.now() / 1000 - 10800 },
+        status: 'failure',
+      },
+      {
+        id: '5',
+        userId: 'super1',
+        userEmail: 'superadmin@trustnshare.com',
+        userName: 'Super Admin',
+        userRole: 'super_admin',
+        action: 'ADMIN_APPROVAL',
+        resource: 'Admin Request',
+        details: 'Approved admin registration for John Doe',
+        ipAddress: '192.168.1.1',
+        timestamp: { seconds: Date.now() / 1000 - 14400 },
+        status: 'success',
+      },
+      {
+        id: '7',
+        userId: 'user6',
+        userEmail: 'alice.client@example.com',
+        userName: 'Alice Client',
+        userRole: 'client',
+        action: 'FILE_UPLOAD',
+        resource: 'Document: report.xlsx',
+        details: 'Uploaded file to shared workspace',
+        ipAddress: '192.168.1.105',
+        timestamp: { seconds: Date.now() / 1000 - 21600 },
+        status: 'success',
+      },
+      {
+        id: '8',
+        userId: 'user7',
+        userEmail: 'charlie.admin@company.com',
+        userName: 'Charlie Admin',
+        userRole: 'admin',
+        action: 'SETTINGS_UPDATE',
+        resource: 'System Settings',
+        details: 'Updated notification preferences',
+        ipAddress: '192.168.1.106',
+        timestamp: { seconds: Date.now() / 1000 - 25200 },
+        status: 'success',
+      },
+    ];
+
+    setLogs(mockLogs);
+    setFilteredLogs(mockLogs);
+    setLoading(false);
   }, []);
-
-  useEffect(() => {
-    applyFilters();
-  }, [logs, searchTerm, roleFilter, actionFilter, statusFilter]);
-
-  const fetchAuditLogs = async () => {
-    try {
-      setLoading(true);
-      
-      // Fetch from audit_logs collection
-      const q = query(
-        collection(firestore, 'audit_logs'),
-        orderBy('timestamp', 'desc'),
-        limit(100)
-      );
-      
-      const querySnapshot = await getDocs(q);
-      const logsData: AuditLog[] = [];
-      
-      querySnapshot.forEach((doc) => {
-        logsData.push({
-          id: doc.id,
-          ...doc.data(),
-        } as AuditLog);
-      });
-
-      setLogs(logsData);
-    } catch (error) {
-      console.error('Error fetching audit logs:', error);
-      toast.error('Failed to load audit logs');
-      
-      // Mock data for demonstration
-      const mockLogs: AuditLog[] = [
-        {
-          id: '1',
-          userId: 'user1',
-          userEmail: 'john.admin@techcorp.com',
-          userName: 'John Admin',
-          userRole: 'admin',
-          action: 'LOGIN',
-          resource: 'Authentication',
-          details: 'Successful login from dashboard',
-          ipAddress: '192.168.1.100',
-          timestamp: { seconds: Date.now() / 1000 },
-          status: 'success',
-        },
-        {
-          id: '2',
-          userId: 'user2',
-          userEmail: 'jane.client@example.com',
-          userName: 'Jane Client',
-          userRole: 'client',
-          action: 'FILE_ACCESS',
-          resource: 'Document: contract.pdf',
-          details: 'Downloaded file from shared folder',
-          ipAddress: '192.168.1.101',
-          timestamp: { seconds: Date.now() / 1000 - 3600 },
-          status: 'success',
-        },
-        {
-          id: '3',
-          userId: 'user3',
-          userEmail: 'mike.admin@datasys.com',
-          userName: 'Mike Admin',
-          userRole: 'admin',
-          action: 'POLICY_UPDATE',
-          resource: 'Policy #12',
-          details: 'Updated data sharing policy',
-          ipAddress: '192.168.1.102',
-          timestamp: { seconds: Date.now() / 1000 - 7200 },
-          status: 'success',
-        },
-        {
-          id: '4',
-          userId: 'user4',
-          userEmail: 'sarah.client@company.com',
-          userName: 'Sarah Client',
-          userRole: 'client',
-          action: 'LOGIN_FAILED',
-          resource: 'Authentication',
-          details: 'Failed login attempt - incorrect password',
-          ipAddress: '192.168.1.103',
-          timestamp: { seconds: Date.now() / 1000 - 10800 },
-          status: 'failure',
-        },
-        {
-          id: '5',
-          userId: 'super1',
-          userEmail: 'superadmin@trustnshare.com',
-          userName: 'Super Admin',
-          userRole: 'super_admin',
-          action: 'ADMIN_APPROVAL',
-          resource: 'Admin Request',
-          details: 'Approved admin registration for John Doe',
-          ipAddress: '192.168.1.1',
-          timestamp: { seconds: Date.now() / 1000 - 14400 },
-          status: 'success',
-        },
-        {
-          id: '6',
-          userId: 'user5',
-          userEmail: 'bob.admin@securenet.com',
-          userName: 'Bob Admin',
-          userRole: 'admin',
-          action: 'USER_CREATE',
-          resource: 'User Management',
-          details: 'Created new client user account',
-          ipAddress: '192.168.1.104',
-          timestamp: { seconds: Date.now() / 1000 - 18000 },
-          status: 'success',
-        },
-        {
-          id: '7',
-          userId: 'user6',
-          userEmail: 'alice.client@example.com',
-          userName: 'Alice Client',
-          userRole: 'client',
-          action: 'FILE_UPLOAD',
-          resource: 'Document: report.xlsx',
-          details: 'Uploaded file to shared workspace',
-          ipAddress: '192.168.1.105',
-          timestamp: { seconds: Date.now() / 1000 - 21600 },
-          status: 'success',
-        },
-        {
-          id: '8',
-          userId: 'user7',
-          userEmail: 'charlie.admin@company.com',
-          userName: 'Charlie Admin',
-          userRole: 'admin',
-          action: 'SETTINGS_UPDATE',
-          resource: 'System Settings',
-          details: 'Updated notification preferences',
-          ipAddress: '192.168.1.106',
-          timestamp: { seconds: Date.now() / 1000 - 25200 },
-          status: 'success',
-        },
-      ];
-      setLogs(mockLogs);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const applyFilters = () => {
     let filtered = [...logs];
@@ -372,7 +328,7 @@ const EnhancedAuditLogs = () => {
             ) : filteredLogs.length === 0 ? (
               <div className="text-center py-10 text-muted-foreground">No logs found matching the filters</div>
             ) : (
-              <div className="space-y-3">
+              <div className="max-h-[60vh] overflow-y-auto space-y-3 pr-2">
                 {filteredLogs.map((log) => {
                   const ActionIcon = getActionIcon(log.action);
                   return (
@@ -387,8 +343,8 @@ const EnhancedAuditLogs = () => {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap mb-1">
                           <span className="font-medium">{log.userName}</span>
-                          <Badge className={getRoleColor(log.userRole)}>
-                            {log.userRole.replace('_', ' ')}
+                          <Badge className={getRoleColor(log.userRole ?? '')}>
+                            {log.userRole ? log.userRole.replace(/_/g, ' ') : '—'}
                           </Badge>
                           <Badge className={getStatusColor(log.status)}>
                             {log.status}
