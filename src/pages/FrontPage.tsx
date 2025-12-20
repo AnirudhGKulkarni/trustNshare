@@ -83,8 +83,8 @@ const FrontPage: React.FC = () => {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [fbLoading, setFbLoading] = useState(false);
   const [fbName, setFbName] = useState("");
-  const [fbEmail, setFbEmail] = useState("");
   const [fbMessage, setFbMessage] = useState("");
+  const [emailProvider, setEmailProvider] = useState("");
   // Update this path to the image you placed in /public (e.g., /screens/demo.png)
   const screenImageSrc = "/image.png";
   // Optional: use a laptop frame image from /public. Example: /laptop-frame.png
@@ -298,7 +298,7 @@ const FrontPage: React.FC = () => {
   const carouselTitleClass = isDarkMode ? "text-white" : "text-gray-900";
   const carouselDescriptionClass = isDarkMode ? "text-gray-100" : "text-gray-700";
   const carouselIconColor = isDarkMode ? "text-white" : "text-gray-900";
-  const bgClass = isDarkMode ? "bg-gray-900 text-white" : "bg-white text-gray-900";
+  const bgClass = isDarkMode ? "text-white" : "text-gray-900";
   const cardBgClass = isDarkMode ? "bg-gray-800" : "bg-white";
   const carouselDotContainerClass = isDarkMode ? "bg-white/10" : "bg-black/10";
   const carouselDotActiveClass = isDarkMode ? "bg-white" : "bg-gray-900";
@@ -315,7 +315,21 @@ const FrontPage: React.FC = () => {
   };
 
   return (
-    <div className={`${bgClass} transition-colors duration-300`}>
+    <div className={`${bgClass} transition-colors duration-300 relative min-h-screen`}>
+      {/* Global Background Video for non-hero sections */}
+      <div className="fixed inset-0 w-full h-full -z-50">
+        <video
+          className="w-full h-full object-cover"
+          autoPlay
+          muted
+          loop
+          playsInline
+          src={isDarkMode ? "/darkvideo.mp4" : "/lightvideo.mp4"}
+        />
+        {/* Optional overlay to ensure text readability */}
+        <div className={`absolute inset-0 ${isDarkMode ? 'bg-gray-900/60' : 'bg-white/60'}`} />
+      </div>
+
       <FrontNavbar isDarkMode={isDarkMode} onThemeToggle={handleThemeToggle} />
 
       {/* Hero Section with CTA */}
@@ -388,10 +402,10 @@ const FrontPage: React.FC = () => {
       <div className="relative">
         <div className="absolute inset-0 -z-20" />
         {/* subtle overlay to ensure text contrast */}
-        <div className="absolute inset-0 bg-black/30 -z-10 pointer-events-none" />
+        {/* Removed bg-black/30 overlay per request */}
 
         {/* Hero Carousel Section */}
-        <section className={`relative w-full h-96 overflow-hidden ${isDarkMode ? "bg-gray-800/30" : "bg-gradient-to-r from-blue-50/40 to-purple-50/40"}`}>
+        <section className={`relative w-full h-96 overflow-hidden`}>
         <div className="relative w-full h-full flex items-center justify-center">
           {/* Carousel Content with Animation */}
           <div className={`text-center z-10 px-6 animate-scale-in ${carouselTitleClass}`} key={`carousel-${currentSlide}`}>
@@ -402,8 +416,8 @@ const FrontPage: React.FC = () => {
             <p className={`text-xl transition-all duration-500 ${carouselDescriptionClass} ${isDarkMode ? "opacity-90" : "opacity-95"}`}>{carouselItems[currentSlide].description}</p>
           </div>
 
-          {/* Carousel Background with smooth transition */}
-          <div className={`absolute inset-0 bg-gradient-to-r ${currentGradient} -z-10 transition-all duration-700`}></div>
+          {/* Carousel Background with smooth transition - Removed per request */}
+          {/* <div className={`absolute inset-0 bg-gradient-to-r ${currentGradient} -z-10 transition-all duration-700 opacity-30`}></div> */}
 
           {/* Dots with enhanced styling */}
           <div className={`absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-2 px-4 py-2 rounded-full backdrop-blur-sm border ${
@@ -426,7 +440,7 @@ const FrontPage: React.FC = () => {
       </section>
 
       {/* Statistics Section */}
-      <section id="stats" className={`py-16 px-6 ${isDarkMode ? "bg-gray-800/30" : "bg-gray-50/30"}`}>
+      <section id="stats" className={`py-16 px-6`}>
         <div className="max-w-7xl mx-auto">
           <h2 className={`text-3xl font-bold mb-12 text-center animate-fade-in ${isDarkMode ? "text-white" : "text-gray-900"}`}>Current Cyber Threats</h2>
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
@@ -486,7 +500,7 @@ const FrontPage: React.FC = () => {
       </section>
 
       {/* Live Demo CTA (between Services and Testimonials) */}
-      <section className={`relative w-full py-24 px-6 ${isDarkMode ? "bg-gray-900" : "bg-gray-900 text-white"}`}>
+      <section className={`relative w-full py-24 px-6`}>
         {/* soft background accents */}
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute -top-10 -left-10 w-80 h-80 bg-red-600/20 rounded-full blur-3xl" />
@@ -499,7 +513,7 @@ const FrontPage: React.FC = () => {
             <h2 className="mt-2 text-3xl md:text-4xl font-extrabold leading-tight">
               Experience the future of proactive cybersecurity
             </h2>
-            <p className="mt-3 text-gray-300 max-w-3xl mx-auto">
+            <p className={`mt-3 max-w-3xl mx-auto ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>
               A modern and trusted secure-sharing platform that lets you exchange files, documents, and sensitive data with confidence. With strong encryption, smart access control, and a smooth user experience, it ensures every interaction stays private, protected, and effortless.
             </p>
             
@@ -653,7 +667,8 @@ const FrontPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setFeedbackOpen(true)}
-                className="rounded-full px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold shadow hover:opacity-90 transition"
+                className="rounded-lg px-4 py-2 text-sm font-medium text-white shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105 active:scale-95"
+                style={{ backgroundColor: '#113738' }}
               >
                 Send Feedback
               </button>
@@ -748,17 +763,21 @@ const FrontPage: React.FC = () => {
       {feedbackOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/70" onClick={() => !fbLoading && setFeedbackOpen(false)} />
-          <div className="relative w-full max-w-lg rounded-2xl border border-gray-800 bg-gray-900 text-white shadow-2xl animate-fade-in">
+          <div className={`relative w-full max-w-lg rounded-2xl border shadow-2xl animate-fade-in ${
+            isDarkMode 
+              ? "bg-gray-900 border-gray-800 text-white" 
+              : "bg-white border-gray-200 text-gray-900"
+          }`}>
             <div className="p-6 md:p-8">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h3 className="text-xl font-bold">Send Feedback</h3>
-                  <p className="text-sm text-gray-400 mt-1">We value your thoughts. Share ideas, issues, or praise.</p>
+                  <p className={`text-sm mt-1 ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}>We value your thoughts. Share ideas, issues, or praise.</p>
                 </div>
                 <button
                   type="button"
                   onClick={() => !fbLoading && setFeedbackOpen(false)}
-                  className="text-gray-400 hover:text-white"
+                  className={`${isDarkMode ? "text-gray-400 hover:text-white" : "text-gray-500 hover:text-gray-900"}`}
                   aria-label="Close"
                 >
                   ✕
@@ -767,64 +786,103 @@ const FrontPage: React.FC = () => {
 
               <form
                 className="mt-6 space-y-4"
-                onSubmit={async (e) => {
+                onSubmit={(e) => {
                   e.preventDefault();
                   if (!fbMessage.trim()) {
                     alert("Please enter your feedback.");
                     return;
                   }
-                  try {
-                    setFbLoading(true);
-                    await addDoc(collection(firestore, "feedback"), {
-                      name: fbName.trim() || null,
-                      email: fbEmail.trim() || null,
-                      message: fbMessage.trim(),
-                      createdAt: serverTimestamp(),
-                      page: "FrontPage",
-                    });
-                    setFbName("");
-                    setFbEmail("");
-                    setFbMessage("");
-                    setFeedbackOpen(false);
-                    alert("Thanks for your feedback!");
-                  } catch (err) {
-                    console.error("Failed to submit feedback:", err);
-                    alert("Couldn't send feedback. Please try again.");
-                  } finally {
-                    setFbLoading(false);
+
+                  if (!emailProvider) {
+                    alert("Please select a platform to send feedback.");
+                    return;
                   }
+                  
+                  const subject = `Feedback from ${fbName || 'User'}`;
+                  const body = `Name: ${fbName || 'Not provided'}
+
+Message:
+${fbMessage}`;
+
+                  let mailLink = "";
+                  const recipient = "trustnshare1@gmail.com";
+                  
+                  switch(emailProvider) {
+                    case "gmail":
+                      mailLink = `https://mail.google.com/mail/?view=cm&fs=1&to=${recipient}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                      window.open(mailLink, '_blank');
+                      break;
+                    case "outlook":
+                      mailLink = `https://outlook.office.com/mail/deeplink/compose?to=${recipient}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                      window.open(mailLink, '_blank');
+                      break;
+                    case "yahoo":
+                      mailLink = `https://compose.mail.yahoo.com/?to=${recipient}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                      window.open(mailLink, '_blank');
+                      break;
+                    case "zoho":
+                      mailLink = `https://mail.zoho.com/zm/#compose/to=${recipient}&subject=${encodeURIComponent(subject)}&content=${encodeURIComponent(body)}`;
+                      window.open(mailLink, '_blank');
+                      break;
+                    default: // default app and others (iCloud, GMX, Mail.com, etc.)
+                      mailLink = `mailto:${recipient}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                      window.location.href = mailLink;
+                      break;
+                  }
+                  
+                  setFeedbackOpen(false);
+                  setFbName("");
+                  setFbMessage("");
                 }}
               >
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
                   <div>
-                    <label className="block text-sm mb-1 text-gray-300">Name</label>
+                    <label className={`block text-sm mb-1 ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>Name</label>
                     <input
                       value={fbName}
                       onChange={(e) => setFbName(e.target.value)}
-                      className="w-full rounded-lg bg-gray-900 border border-gray-700 px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-600"
-                      placeholder="Optional"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm mb-1 text-gray-300">Email</label>
-                    <input
-                      type="email"
-                      value={fbEmail}
-                      onChange={(e) => setFbEmail(e.target.value)}
-                      className="w-full rounded-lg bg-gray-900 border border-gray-700 px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                      className={`w-full rounded-lg border px-3 py-2 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-600 ${
+                        isDarkMode 
+                          ? "bg-gray-900 border-gray-700 text-white" 
+                          : "bg-white border-gray-300 text-gray-900"
+                      }`}
                       placeholder="Optional"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm mb-1 text-gray-300">Your feedback</label>
+                   <label className={`block text-sm mb-1 ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>Send via</label>
+                   <select
+                      value={emailProvider}
+                      onChange={(e) => setEmailProvider(e.target.value)}
+                      className={`w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600 ${
+                        isDarkMode 
+                          ? "bg-gray-900 border-gray-700 text-white" 
+                          : "bg-white border-gray-300 text-gray-900"
+                      }`}
+                   >
+                      <option value="" disabled>Select a platform to send feedback</option>
+                      <option value="gmail">Gmail (by Google)</option>
+                      <option value="outlook">Outlook.com (by Microsoft)</option>
+                      <option value="yahoo">Yahoo Mail</option>
+                      <option value="zoho">Zoho Mail</option>
+                      <option value="default">Default Mail App</option>
+                   </select>
+                </div>
+
+                <div>
+                  <label className={`block text-sm mb-1 ${isDarkMode ? "text-gray-300" : "text-gray-700"}`}>Your feedback</label>
                   <textarea
                     value={fbMessage}
                     onChange={(e) => setFbMessage(e.target.value)}
                     required
                     rows={5}
-                    className="w-full rounded-lg bg-gray-900 border border-gray-700 px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    className={`w-full rounded-lg border px-3 py-2 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-600 ${
+                        isDarkMode 
+                          ? "bg-gray-900 border-gray-700 text-white" 
+                          : "bg-white border-gray-300 text-gray-900"
+                      }`}
                     placeholder="Tell us what’s working and what could be better"
                   />
                 </div>
@@ -833,16 +891,21 @@ const FrontPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => !fbLoading && setFeedbackOpen(false)}
-                    className="rounded-full px-4 py-2 border border-gray-700 text-gray-300 hover:bg-gray-800"
+                    className={`rounded-full px-4 py-2 border ${
+                      isDarkMode 
+                        ? "border-gray-700 text-gray-300 hover:bg-gray-800" 
+                        : "border-gray-300 text-gray-700 hover:bg-gray-100"
+                    }`}
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={fbLoading}
-                    className="rounded-full px-5 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold shadow disabled:opacity-60"
+                    className="rounded-lg px-5 py-2 text-sm font-medium text-white shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105 active:scale-95 disabled:opacity-60 disabled:transform-none"
+                    style={{ backgroundColor: '#113738' }}
                   >
-                    {fbLoading ? "Sending..." : "Send Feedback"}
+                    Send Feedback
                   </button>
                 </div>
               </form>

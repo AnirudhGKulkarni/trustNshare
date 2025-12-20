@@ -70,7 +70,7 @@ export const Navbar = ({ onToggleSidebar }: { onToggleSidebar?: () => void }) =>
   };
 
   return (
-    <header className="flex h-16 items-center justify-between border-b border-border bg-card px-6">
+    <header className="relative z-30 flex h-16 items-center justify-between border-b border-border bg-card px-6">
       <div className="flex items-center gap-4">
         <button onClick={onToggleSidebar} className="lg:hidden p-2 rounded-md hover:bg-border">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -127,7 +127,13 @@ export const Navbar = ({ onToggleSidebar }: { onToggleSidebar?: () => void }) =>
 
             <DropdownMenuSeparator />
 
-            <DropdownMenuItem onClick={() => navigate("/settings") }>
+            <DropdownMenuItem onClick={() => {
+              if (profile?.role === 'client') {
+                navigate('/client/profile');
+              } else {
+                navigate('/settings');
+              }
+            }}>
               <Settings className="mr-2 h-4 w-4" />
               Settings
             </DropdownMenuItem>

@@ -161,36 +161,7 @@ const ClientDashboard: React.FC = () => {
   const [fileSensitivityData, setFileSensitivityData] = useState<FileSensitivityChartDatum[]>(() => buildEmptySensitivityData());
   const [loginActivityData, setLoginActivityData] = useState<LoginActivityDatum[]>(() => buildLastSevenDayBuckets());
   const [recentActivity, setRecentActivity] = useState<RecentActivityItem[]>([]);
-  const activityRef = useRef<HTMLDivElement | null>(null);
-  const [canScrollRight, setCanScrollRight] = useState(false);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-
-  useEffect(() => {
-    const el = activityRef.current;
-    if (!el) {
-      setCanScrollRight(false);
-      setCanScrollLeft(false);
-      return;
-    }
-
-    const updateScrollState = () => {
-      try {
-        setCanScrollRight(el.scrollWidth > el.clientWidth && el.scrollLeft + el.clientWidth < el.scrollWidth - 1);
-        setCanScrollLeft(el.scrollLeft > 0);
-      } catch (e) {
-        // ignore
-      }
-    };
-
-    updateScrollState();
-    window.addEventListener('resize', updateScrollState);
-    el.addEventListener('scroll', updateScrollState);
-
-    return () => {
-      window.removeEventListener('resize', updateScrollState);
-      el.removeEventListener('scroll', updateScrollState);
-    };
-  }, [recentActivity]);
+  // Simplify recent activity UI: no scroll arrows or scroll-state tracking.
 
   useEffect(() => {
     setLocalProfile(profile ?? {});
@@ -213,6 +184,8 @@ const ClientDashboard: React.FC = () => {
     };
     load();
   }, [currentUser]);
+
+  // scroll helpers removed — UI simplified to show a small fixed set of activity items.
 
   // Real-time alerts subscription
   useEffect(() => {
@@ -381,7 +354,7 @@ const ClientDashboard: React.FC = () => {
       collection(firestore, 'audit_logs'),
       where('userId', '==', currentUser.uid),
       orderBy('timestamp', 'desc'),
-      limit(5)
+      limit(3)
     );
 
     const unsubscribe = onSnapshot(logsQuery, (snapshot) => {
@@ -508,7 +481,6 @@ const ClientDashboard: React.FC = () => {
                     {/* hide native scrollbar and provide left/right scroll buttons */}
                     <style>{`.hide-scrollbar::-webkit-scrollbar{display:none;} .hide-scrollbar{-ms-overflow-style:none; scrollbar-width:none;}`}</style>
                     <div
-                      ref={activityRef as any}
                       className="flex gap-3 overflow-x-auto py-2 px-1 hide-scrollbar"
                       style={{ scrollSnapType: 'x mandatory' }}
                     >
@@ -541,49 +513,7 @@ const ClientDashboard: React.FC = () => {
                       )}
                     </div>
 
-                    {/* Right-side scroll button */}
-                    {/* Left scroll button - always rendered but disabled when not scrollable */}
-                    <button
-                      aria-label="Scroll recent activity left"
-                      onClick={() => {
-                        const el = activityRef.current;
-                        if (!el || !canScrollLeft) return;
-                        const amount = Math.floor(el.clientWidth * 0.8) || 300;
-                        el.scrollBy({ left: -amount, behavior: 'smooth' });
-                        // update state after animation
-                        setTimeout(() => {
-                          const e = activityRef.current;
-                          if (!e) return;
-                          setCanScrollLeft(e.scrollLeft > 0);
-                          setCanScrollRight(e.scrollWidth > e.clientWidth && e.scrollLeft + e.clientWidth < e.scrollWidth - 1);
-                        }, 300);
-                      }}
-                      disabled={!canScrollLeft}
-                      className={`absolute left-2 top-1/2 -translate-y-1/2 rounded-full p-2 z-20 shadow transition ${canScrollLeft ? 'bg-card text-foreground border' : 'bg-card/40 text-muted-foreground border border-border pointer-events-none'}`}
-                    >
-                      <ChevronRight className="h-4 w-4 rotate-180" />
-                    </button>
-
-                    {/* Right scroll button - always rendered but disabled when not scrollable */}
-                    <button
-                      aria-label="Scroll recent activity right"
-                      onClick={() => {
-                        const el = activityRef.current;
-                        if (!el || !canScrollRight) return;
-                        const amount = Math.floor(el.clientWidth * 0.8) || 300;
-                        el.scrollBy({ left: amount, behavior: 'smooth' });
-                        setTimeout(() => {
-                          const e = activityRef.current;
-                          if (!e) return;
-                          setCanScrollLeft(e.scrollLeft > 0);
-                          setCanScrollRight(e.scrollWidth > e.clientWidth && e.scrollLeft + e.clientWidth < e.scrollWidth - 1);
-                        }, 300);
-                      }}
-                      disabled={!canScrollRight}
-                      className={`absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-2 z-20 shadow transition ${canScrollRight ? 'bg-card text-foreground border' : 'bg-card/40 text-muted-foreground border border-border pointer-events-none'}`}
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </button>
+                    {/* Scroll arrow buttons removed — simplified UI shows only up to 3 items. */}
                   </div>
                 </div>
 
