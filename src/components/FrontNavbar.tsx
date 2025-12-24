@@ -227,28 +227,18 @@ const FrontNavbar: React.FC<FrontNavbarProps> = ({ isDarkMode = false, onThemeTo
               {/* Theme Toggle Button - Always Visible */}
               <button
                 onClick={onThemeToggle}
-                className={`relative inline-flex h-10 w-20 items-center rounded-full transition-all duration-500 transform hover:scale-105 active:scale-95 ${
-                  isDarkMode
-                    ? "bg-gradient-to-r from-gray-800 to-gray-900 shadow-lg shadow-yellow-500/20 border border-yellow-400/30"
-                    : "bg-gradient-to-r from-gray-100 to-gray-200 shadow-lg shadow-blue-400/20 border border-blue-400/30"
-                }`}
+                className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
                 title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
               >
-                <span
-                  className={`inline-block h-8 w-8 transform rounded-full bg-white shadow-lg transition-all duration-500 flex items-center justify-center ${
-                    isDarkMode ? "translate-x-10" : "translate-x-1"
-                  }`}
-                >
-                  {isDarkMode ? (
-                    <svg className="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
-                    </svg>
-                  ) : (
-                    <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.536l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.121-10.121l.707-.707a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414zm0 10.121a1 1 0 00-1.414 1.414l.707.707a1 1 0 001.414-1.414l-.707-.707zM7 11a1 1 0 100-2 1 1 0 000 2zm-2.536-2.464a1 1 0 00-1.414 1.414l.707.707a1 1 0 001.414-1.414l-.707-.707zM3 8a1 1 0 110-2 1 1 0 010 2zm7-3a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1z" clipRule="evenodd" />
-                    </svg>
-                  )}
-                </span>
+                {isDarkMode ? (
+                  <svg className="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5 text-gray-700" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.536l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.121-10.121l.707-.707a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414zm0 10.121a1 1 0 00-1.414 1.414l.707.707a1 1 0 001.414-1.414l-.707-.707zM7 11a1 1 0 100-2 1 1 0 000 2zm-2.536-2.464a1 1 0 00-1.414 1.414l.707.707a1 1 0 001.414-1.414l-.707-.707zM3 8a1 1 0 110-2 1 1 0 010 2zm7-3a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1z" clipRule="evenodd" />
+                  </svg>
+                )}
               </button>
               </div>
             )}
@@ -398,26 +388,20 @@ const FrontNavbar: React.FC<FrontNavbarProps> = ({ isDarkMode = false, onThemeTo
               {/* Theme Toggle Button - Mobile */}
               <button
                 onClick={onThemeToggle}
-                className={`rounded-lg p-3 transition-all duration-300 transform hover:scale-110 active:scale-95 flex items-center justify-center gap-2 border-2 font-medium ${
+                className={`rounded-lg p-2.5 transition-all duration-300 transform hover:scale-110 active:scale-95 flex items-center justify-center border ${
                   isDarkMode
-                    ? "border-yellow-400/50 bg-yellow-400/10 hover:border-yellow-400 hover:bg-yellow-400/20 text-yellow-400"
-                    : "border-blue-400/50 bg-blue-400/10 hover:border-blue-400 hover:bg-blue-400/20 text-blue-600"
+                    ? "border-amber-500/40 bg-slate-800 hover:border-amber-500/60 hover:bg-slate-700 text-amber-400"
+                    : "border-blue-400/40 bg-slate-100 hover:border-blue-400/60 hover:bg-slate-200 text-blue-500"
                 }`}
               >
                 {isDarkMode ? (
-                  <>
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
-                    </svg>
-                    <span>Dark Mode</span>
-                  </>
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
+                  </svg>
                 ) : (
-                  <>
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.536l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.121-10.121l.707-.707a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414zm0 10.121a1 1 0 00-1.414 1.414l.707.707a1 1 0 001.414-1.414l-.707-.707zM7 11a1 1 0 100-2 1 1 0 000 2zm-2.536-2.464a1 1 0 00-1.414 1.414l.707.707a1 1 0 001.414-1.414l-.707-.707zM3 8a1 1 0 110-2 1 1 0 010 2zm7-3a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1z" clipRule="evenodd" />
-                    </svg>
-                    <span>Light Mode</span>
-                  </>
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.536l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.121-10.121l.707-.707a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414zm0 10.121a1 1 0 00-1.414 1.414l.707.707a1 1 0 001.414-1.414l-.707-.707zM7 11a1 1 0 100-2 1 1 0 000 2zm-2.536-2.464a1 1 0 00-1.414 1.414l.707.707a1 1 0 001.414-1.414l-.707-.707zM3 8a1 1 0 110-2 1 1 0 010 2zm7-3a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1z" clipRule="evenodd" />
+                  </svg>
                 )}
               </button>
             </div>

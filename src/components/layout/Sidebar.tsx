@@ -44,31 +44,25 @@ export const Sidebar = ({ mobileOpen = false, onClose }: { mobileOpen?: boolean;
       {/* Desktop and mobile share panel markup; desktop will be collapsed by default via wrapper classes below */}
       <div className="w-full">
         <div className="h-20 border-b border-border flex items-center">
-          <div className="w-full h-20 flex items-center px-2">
-            {/* Logo: show compact shield in collapsed state and full image on hover */}
-              <div className="flex items-center gap-3 w-full h-full relative">
-              {/* Compact favicon (visible when collapsed) - show both favicons and make them larger and slightly overlapped */}
-              <div className="flex items-center justify-center w-14 h-14 flex-shrink-0 z-10">
-                {/* Single favicon per theme — hide on sidebar hover so expanded image/video shows */}
-                <img src="/favicon.ico" alt="favicon-light" className="h-9 w-9 object-contain transition-all duration-150 block dark:hidden group-hover:opacity-0" />
-                <img src="/favicon2.ico" alt="favicon-dark" className="h-9 w-9 object-contain transition-all duration-150 hidden dark:block group-hover:opacity-0" />
+          <div className="w-full h-20 flex items-center justify-center px-2">
+            {/* Logo: Show full logo on mobile, compact on desktop collapsed state */}
+            <div className="flex items-center justify-center w-full h-full relative">
+              {/* Compact favicon (desktop only, hidden on mobile) */}
+              <div className="hidden lg:flex items-center justify-center w-14 h-14 flex-shrink-0 z-10 group-hover:hidden">
+                <img src="/favicon.ico" alt="favicon-light" className="h-9 w-9 object-contain block dark:hidden" />
+                <img src="/favicon2.ico" alt="favicon-dark" className="h-9 w-9 object-contain hidden dark:block" />
               </div>
 
-              {/* Expanded area: fills the entire header box when hovered */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                {/* Show light image when not dark, and dark image when dark mode enabled. Images are above video and use contain so full logo is visible. */}
-                <img src="/lbg.png" alt="trustNshare light" className="absolute inset-0 m-auto max-h-full max-w-full object-contain opacity-0 group-hover:opacity-100 transition-opacity duration-200 block dark:hidden z-20 p-2" />
-                <img src="/bg.png" alt="trustNshare dark" className="absolute inset-0 m-auto max-h-full max-w-full object-contain opacity-0 group-hover:opacity-100 transition-opacity duration-200 hidden dark:block z-20 p-2" />
-                {/* Video remains optional and placed behind images */}
-                <video
-                  ref={videoRef}
-                  src="/test.mp4"
-                  className="absolute inset-0 h-full w-full object-cover rounded-md opacity-0 group-hover:opacity-90 transition-opacity duration-200 z-10"
-                  muted
-                  loop
-                  playsInline
-                  preload="none"
-                />
+              {/* Full logo (visible on mobile and on desktop hover) */}
+              <div className="hidden lg:flex lg:opacity-0 opacity-100 lg:group-hover:flex lg:group-hover:opacity-100 transition-opacity duration-200 items-center justify-center">
+                <img src="/lbg.png" alt="trustNshare light" className="max-h-16 max-w-full object-contain block dark:hidden" />
+                <img src="/bg.png" alt="trustNshare dark" className="max-h-16 max-w-full object-contain hidden dark:block" />
+              </div>
+
+              {/* Mobile logo */}
+              <div className="lg:hidden flex items-center justify-center">
+                <img src="/lbg.png" alt="trustNshare light" className="max-h-16 max-w-full object-contain block dark:hidden" />
+                <img src="/bg.png" alt="trustNshare dark" className="max-h-16 max-w-full object-contain hidden dark:block" />
               </div>
             </div>
           </div>
@@ -83,13 +77,13 @@ export const Sidebar = ({ mobileOpen = false, onClose }: { mobileOpen?: boolean;
             title={item.name}
             className={({ isActive }) =>
               cn(
-                // center icons when collapsed, align left on hover
+                // center icons when collapsed on desktop, align left on mobile and hover
                 'flex items-center transition-all duration-150 rounded-lg',
-                'group-hover:justify-start justify-center',
-                'px-0 group-hover:px-3',
+                'lg:justify-center lg:group-hover:justify-start justify-start',
+                'px-3 lg:px-0 lg:group-hover:px-3',
                 'py-2.5 text-sm font-medium',
                 'hover:bg-secondary hover:text-foreground',
-                isActive ? 'group-hover:bg-primary group-hover:text-primary-foreground' : 'text-muted-foreground'
+                isActive ? 'lg:group-hover:bg-primary lg:group-hover:text-primary-foreground bg-primary text-primary-foreground' : 'text-muted-foreground'
               )
             }
           >
@@ -104,7 +98,7 @@ export const Sidebar = ({ mobileOpen = false, onClose }: { mobileOpen?: boolean;
                 >
                   <item.icon className="h-5 w-5" />
                 </span>
-                <span className="ml-3 overflow-hidden max-w-0 opacity-0 group-hover:max-w-xs group-hover:opacity-100 transition-[max-width,opacity] duration-200 whitespace-nowrap">{item.name}</span>
+                <span className="ml-3 overflow-hidden lg:max-w-0 lg:opacity-0 max-w-xs opacity-100 group-hover:max-w-xs group-hover:opacity-100 transition-[max-width,opacity] duration-200 whitespace-nowrap">{item.name}</span>
               </>
             )}
           </NavLink>
@@ -122,7 +116,7 @@ export const Sidebar = ({ mobileOpen = false, onClose }: { mobileOpen?: boolean;
           onClick={onClose}
         />
 
-        <div className={`fixed left-0 top-0 bottom-0 w-64 transform transition-transform ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className={`fixed left-0 top-0 bottom-0 w-64 transform transition-transform ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} bg-card border-r border-border`}>
           {panel}
         </div>
       </div>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { LogOut, Settings, Sun, Moon } from "lucide-react";
+import { LogOut, Settings, Sun, Moon, User } from "lucide-react";
 // avatar removed by user request
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -70,12 +70,11 @@ export const Navbar = ({ onToggleSidebar }: { onToggleSidebar?: () => void }) =>
   };
 
   return (
-    <header className="relative z-30 flex h-16 items-center justify-between border-b border-border bg-card px-6">
-      <div className="flex items-center gap-4">
-        <button onClick={onToggleSidebar} className="lg:hidden p-2 rounded-md hover:bg-border">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M3 5h14a1 1 0 010 2H3a1 1 0 110-2zm0 4h14a1 1 0 010 2H3a1 1 0 110-2zm0 4h14a1 1 0 010 2H3a1 1 0 110-2z" clipRule="evenodd" />
-          </svg>
+    <header className="relative z-30 flex h-16 items-center justify-between border-b border-border bg-card px-4 sm:px-6 w-full min-w-0">
+      <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
+        <button onClick={onToggleSidebar} className="lg:hidden p-2 rounded-md hover:bg-border flex items-center justify-center w-10 h-10">
+          <img src="/favicon.ico" alt="menu" className="h-6 w-6 object-contain block dark:hidden" />
+          <img src="/favicon2.ico" alt="menu" className="h-6 w-6 object-contain hidden dark:block" />
         </button>
           {profile && ["super_admin", "admin", "client"].includes(profile.role) ? (
             <div className="flex flex-col">
@@ -93,7 +92,7 @@ export const Navbar = ({ onToggleSidebar }: { onToggleSidebar?: () => void }) =>
           )}
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 sm:gap-4 ml-auto flex-shrink-0">
         <div className="hidden sm:block">
           {profile?.role !== "client" && (
             <button className="px-3 py-1 rounded-md bg-blue-700 text-white text-sm font-medium hover:opacity-95">Connect to Hardware</button>
@@ -105,19 +104,20 @@ export const Navbar = ({ onToggleSidebar }: { onToggleSidebar?: () => void }) =>
           aria-label="Toggle theme"
           title="Toggle theme"
           onClick={() => setIsDark(!isDark)}
-          className="p-2 rounded-md hover:bg-border"
+          className="p-2 rounded-md hover:bg-border flex-shrink-0 inline-flex"
         >
           {isDark ? <Sun className="h-5 w-5 text-foreground" /> : <Moon className="h-5 w-5 text-foreground" />}
         </button>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-3 p-1 rounded-md hover:bg-border">
-              <span className="hidden md:block text-sm font-medium text-foreground">{displayName}</span>
+            <button className="flex items-center gap-3 p-1 rounded-md hover:bg-border flex-shrink-0 inline-flex">
+              <User className="md:hidden h-5 w-5 text-foreground flex-shrink-0" />
+              <span className="hidden md:inline text-sm font-medium text-foreground">{displayName}</span>
             </button>
           </DropdownMenuTrigger>
 
-          <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuContent align="end" className="w-56 z-50">
             <DropdownMenuLabel>
               <div className="flex flex-col">
                 <span className="text-sm font-medium">{displayName}</span>
